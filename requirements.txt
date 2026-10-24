@@ -1,0 +1,5 @@
+# GlowDL runtime dependencies (Windows / macOS)
+PySide6-Essentials>=6.7,<6.8
+yt-dlp>=2025.1.15
+imageio-ffmpeg>=0.4.9
+certifi

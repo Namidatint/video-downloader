@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# PyInstaller
+build/
+dist/
+*.manifest
+*.spec.bak
+
+# macOS / Windows
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# App runtime data (never commit)
+config.json
+history.json
+logs/
+*.part
+*.ytdl
+cookies.txt
+
+# Editors
+.idea/
+.vscode/
