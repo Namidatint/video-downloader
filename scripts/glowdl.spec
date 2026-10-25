@@ -71,8 +71,8 @@ if IS_MAC:
         info_plist={
             "CFBundleDisplayName": "视频下载器",
             "CFBundleName": "视频下载器",
-            "CFBundleShortVersionString": "1.0.1",
-            "CFBundleVersion": "1.0.1",
+            "CFBundleShortVersionString": "1.0.2",
+            "CFBundleVersion": "1.0.2",
             "NSHighResolutionCapable": True,
             "LSMinimumSystemVersion": "11.0",
             "NSHumanReadableCopyright": "by NamidaTint · 仅用于下载你有权保存的内容",

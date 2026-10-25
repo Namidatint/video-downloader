@@ -459,12 +459,15 @@ class HomePage(QWidget):
         uploader = summary["uploader"]
         self.uploader_label.setText(uploader[:28] if uploader else "")
         is_images = info.get("_type") == "images"
+        is_live = bool(info.get("live_photo"))
         if is_images:
-            self.duration_label.setText(f"图文 · {int(info.get('image_count') or 0)} 张")
+            count = int(info.get("image_count") or 0)
+            self.duration_label.setText(
+                f"实况 · {count} 张 + 动态" if is_live else f"图文 · {count} 张")
         else:
             self.duration_label.setText(
                 paths.human_duration(summary["duration"]) if summary["duration"] else "")
-        self.download_btn.setText("下载图文" if is_images else "开始下载")
+        self.download_btn.setText("下载实况" if is_live else ("下载图文" if is_images else "开始下载"))
         views = summary["view_count"]
         self.views_label.setText(f"· {_compact_number(views)} 次播放" if views else "")
         self.title_label.setText(summary["title"])
@@ -492,9 +495,14 @@ class HomePage(QWidget):
         self.preset_combo.clear()
         if (self._info or {}).get("_type") == "images":
             count = int((self._info or {}).get("image_count") or 0)
-            self.preset_combo.addItem(f"图文 · {count} 张（打包 ZIP）", "best")
+            live = bool((self._info or {}).get("live_photo"))
+            self.preset_combo.addItem(
+                f"实况 · {count} 张（打包 ZIP）" if live else f"图文 · {count} 张（打包 ZIP）",
+                "best")
             self.formats_btn.hide()
-            self.preset_hint.setText("图文作品会打包成一个 ZIP，内含原始图片。")
+            self.preset_hint.setText(
+                "实况照片会打包静态图 + 动态视频（ZIP）。" if live
+                else "图文作品会打包成一个 ZIP，内含原始图片。")
             self.preset_combo.blockSignals(False)
             return
         self.formats_btn.show()

@@ -77,6 +77,7 @@ class DouyinInfo:
     variants: list[DouyinVariant]
     webpage_url: str
     images: list[str] = field(default_factory=list)
+    motion: str = ""
 
     @property
     def best(self) -> DouyinVariant:
@@ -550,7 +551,12 @@ def _cdp_note(url: str, timeout: float = 25.0) -> dict[str, Any]:
           const urls = Array.from(new Set(Array.from(document.images)
             .map(img => img.src)
             .filter(src => src.includes('biz_tag=aweme_images'))));
-          return JSON.stringify({title: document.title || '', images: urls});
+          const videos = Array.from(document.querySelectorAll('video'))
+            .map(video => ({src: video.currentSrc || video.src, duration: video.duration || 0}))
+            .filter(item => item.src && item.duration > 0 &&
+              (item.src.includes('douyinvod') || item.src.includes('video_mp4')));
+          return JSON.stringify({title: document.title || '', images: urls,
+                                 motion: videos.length ? videos[0].src : ''});
         })()"""
 
         deadline = time.time() + timeout
@@ -585,6 +591,9 @@ def _cdp_note(url: str, timeout: float = 25.0) -> dict[str, Any]:
 def parse_note(payload: dict[str, Any], webpage_url: str = "") -> DouyinInfo:
     """Build a gallery result from the note page's rendered DOM."""
     images = [str(u) for u in (payload.get("images") or []) if str(u).startswith("http")]
+    motion = str(payload.get("motion") or "")
+    if not motion.startswith("http"):
+        motion = ""
     if not images:
         raise DouyinError("抖音图文页面没有返回图片，请稍后重试。")
     title = str(payload.get("title") or "").strip()
@@ -603,6 +612,7 @@ def parse_note(payload: dict[str, Any], webpage_url: str = "") -> DouyinInfo:
         variants=[],
         webpage_url=webpage_url,
         images=images,
+        motion=motion,
     )
 
 
@@ -662,10 +672,12 @@ def to_info_dict(info: DouyinInfo) -> dict[str, Any]:
                 "ext": "zip",
                 "height": None,
                 "width": None,
-                "format_note": f"图文 · {len(info.images)} 张",
+                "format_note": (f"实况 · {len(info.images)} 张 + 动态"
+                                if info.motion else f"图文 · {len(info.images)} 张"),
                 "filesize": None,
             }],
             "image_count": len(info.images),
+            "live_photo": bool(info.motion),
             "_type": "images",
             "_glowdl_douyin": True,
         }
@@ -868,6 +880,15 @@ def _download_images(info: DouyinInfo, settings, progress, cancel_event,
             item = work / f"{index + 1:02d}{suffix}"
             _download_http(url, item, None, cancel_event)
             files.append(item)
+        if info.motion:
+            try:
+                motion_file = work / "motion.mp4"
+                _download_http(info.motion, motion_file, None, cancel_event)
+                files.append(motion_file)
+            except DouyinCancelled:
+                raise
+            except Exception:
+                pass  # keep the still image if the motion clip is unavailable
         import zipfile
 
         with zipfile.ZipFile(target, "w", compression=zipfile.ZIP_STORED) as archive:

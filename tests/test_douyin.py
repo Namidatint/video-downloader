@@ -96,7 +96,8 @@ def test_extract_url_from_share_text():
 def test_parse_note_gallery():
     info = douyin.parse_note(
         {"title": "感觉至上#神级live现场 - 抖音",
-         "images": ["https://example.com/a.webp", "https://example.com/b.webp"]},
+         "images": ["https://example.com/a.webp", "https://example.com/b.webp"],
+         "motion": "https://example.com/motion.mp4"},
         "https://www.douyin.com/note/7686466217775889275",
     )
     assert info.is_images
@@ -106,6 +107,7 @@ def test_parse_note_gallery():
     payload = douyin.to_info_dict(info)
     assert payload["_type"] == "images"
     assert payload["image_count"] == 2
+    assert payload["live_photo"] is True
     assert payload["formats"][0]["ext"] == "zip"
     assert douyin.render_filename("%(title)s.%(ext)s", info, ext="zip").endswith(".zip")
 
