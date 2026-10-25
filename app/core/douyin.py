@@ -560,6 +560,8 @@ def _cdp_note(url: str, timeout: float = 25.0) -> dict[str, Any]:
         })()"""
 
         deadline = time.time() + timeout
+        still_payload: dict[str, Any] | None = None
+        still_deadline = 0.0
         while time.time() < deadline:
             request_id = send("Runtime.evaluate",
                               {"expression": expression, "returnByValue": True})
@@ -575,9 +577,19 @@ def _cdp_note(url: str, timeout: float = 25.0) -> dict[str, Any]:
                         except ValueError:
                             payload = {}
                         if payload.get("images"):
-                            return payload
+                            # The still image renders before the Live Photo clip;
+                            # give the <video> element a short window to appear.
+                            if payload.get("motion"):
+                                return payload
+                            if still_payload is None:
+                                still_payload = payload
+                                still_deadline = time.time() + 2.5
+                            elif time.time() >= still_deadline:
+                                return still_payload
                     break
             time.sleep(0.5)
+        if still_payload is not None:
+            return still_payload
         raise DouyinError("抖音图文页面没有返回图片，请稍后重试。")
     finally:
         if ws is not None:
