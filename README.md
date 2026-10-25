@@ -7,6 +7,8 @@
   <img src="app/resources/icon.png" width="112" alt="视频下载器 icon">
 </p>
 
+**GitHub 仓库**：[Namidatint/video-downloader](https://github.com/Namidatint/video-downloader) · **下载**：[Releases](https://github.com/Namidatint/video-downloader/releases/tag/v1.0.0)
+
 ![下载页](docs/screenshots/01-home.png)
 
 ---
