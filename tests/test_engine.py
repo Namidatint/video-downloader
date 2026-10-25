@@ -46,7 +46,25 @@ def test_build_options_audio(settings):
     assert opts["writethumbnail"] is False
 
 
+def test_build_options_direct_mode(settings, monkeypatch):
+    for key in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY",
+                "http_proxy", "https_proxy", "all_proxy"):
+        monkeypatch.delenv(key, raising=False)
+    settings.proxy_mode = "direct"
+    settings.proxy = "http://127.0.0.1:7890"
+    opts = engine.build_download_options(settings, "best")
+    assert opts["proxy"] == ""  # explicit direct wins over the OS proxy
+
+
+def test_build_options_custom_mode(settings):
+    settings.proxy_mode = "custom"
+    settings.proxy = "http://127.0.0.1:7890"
+    opts = engine.build_download_options(settings, "best")
+    assert opts["proxy"] == "http://127.0.0.1:7890"
+
+
 def test_build_options_network(settings):
+    settings.proxy_mode = "custom"
     settings.proxy = "http://127.0.0.1:7890"
     settings.rate_limit_kbps = 512
     settings.cookies_browser = "chrome"

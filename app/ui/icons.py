@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import QPointF, QRectF, Qt
-from PySide6.QtGui import (QColor, QIcon, QLinearGradient, QPainter, QPainterPath,
-                           QPen, QPixmap)
+from PySide6.QtGui import QColor, QIcon, QPainter, QPainterPath, QPen, QPixmap
 
 _ICONS = {
     "download", "list", "clock", "pulse", "gear", "play", "pause", "folder",
@@ -253,51 +252,39 @@ def icon(name: str, color: str | QColor = "#E8EDF7", size: int = 20) -> QIcon:
 
 
 def app_pixmap(size: int = 256) -> QPixmap:
-    """The GlowDL app icon: rounded gradient tile with a download arrow."""
+    """The GlowDL mark: a square contact-sheet cell, paper ink on warm black."""
     px = QPixmap(size, size)
     px.fill(Qt.transparent)
     painter = QPainter(px)
-    painter.setRenderHint(QPainter.Antialiasing, True)
-    rect = QRectF(size * 0.03, size * 0.03, size * 0.94, size * 0.94)
-    radius = size * 0.235
-    gradient = QLinearGradient(rect.topLeft(), rect.bottomRight())
-    gradient.setColorAt(0.0, QColor("#6C8CFF"))
-    gradient.setColorAt(0.55, QColor("#8B6CFF"))
-    gradient.setColorAt(1.0, QColor("#4FD1C5"))
-    painter.setPen(Qt.NoPen)
-    painter.setBrush(gradient)
-    painter.drawRoundedRect(rect, radius, radius)
-
-    # soft highlight
-    highlight = QLinearGradient(rect.topLeft(), rect.bottomLeft())
-    highlight.setColorAt(0.0, QColor(255, 255, 255, 60))
-    highlight.setColorAt(0.5, QColor(255, 255, 255, 0))
-    painter.setBrush(highlight)
-    painter.drawRoundedRect(rect, radius, radius)
-
-    # arrow
-    pen = QPen(QColor("#FFFFFF"), size * 0.075)
-    pen.setCapStyle(Qt.RoundCap)
-    pen.setJoinStyle(Qt.RoundJoin)
-    painter.setPen(pen)
+    painter.setRenderHint(QPainter.Antialiasing, False)
+    rect = QRectF(size * 0.04, size * 0.04, size * 0.92, size * 0.92)
+    painter.fillRect(rect, QColor("#0B0A09"))
+    painter.setPen(QPen(QColor("#4B453C").lighter(115), max(1.0, size * 0.012)))
     painter.setBrush(Qt.NoBrush)
+    painter.drawRect(rect.adjusted(0, 0, -1, -1))
+
+    # paper-white download glyph
+    pen = QPen(QColor("#F7F4ED"), max(1.0, size * 0.072))
+    pen.setCapStyle(Qt.FlatCap)
+    pen.setJoinStyle(Qt.MiterJoin)
+    painter.setPen(pen)
     cx = size * 0.5
     path = QPainterPath()
-    path.moveTo(cx, size * 0.24)
+    path.moveTo(cx, size * 0.23)
+    path.lineTo(cx, size * 0.56)
+    path.moveTo(size * 0.35, size * 0.43)
     path.lineTo(cx, size * 0.58)
-    path.moveTo(size * 0.34, size * 0.44)
-    path.lineTo(cx, size * 0.60)
-    path.lineTo(size * 0.66, size * 0.44)
+    path.lineTo(size * 0.65, size * 0.43)
     painter.drawPath(path)
     path2 = QPainterPath()
-    path2.moveTo(size * 0.30, size * 0.73)
-    path2.lineTo(size * 0.70, size * 0.73)
+    path2.moveTo(size * 0.31, size * 0.72)
+    path2.lineTo(size * 0.69, size * 0.72)
     painter.drawPath(path2)
 
-    # sparkle dot
+    # one amber registration square — the only colour in the mark
     painter.setPen(Qt.NoPen)
-    painter.setBrush(QColor(255, 255, 255, 170))
-    painter.drawEllipse(QPointF(size * 0.77, size * 0.25), size * 0.025, size * 0.025)
+    painter.setBrush(QColor("#F2B24A"))
+    painter.drawRect(QRectF(size * 0.70, size * 0.14, size * 0.09, size * 0.09))
 
     painter.end()
     return px

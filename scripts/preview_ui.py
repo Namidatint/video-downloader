@@ -180,6 +180,11 @@ def main() -> None:
                      filesize=88_000_000, duration=420, finished_at=time.time() - 86400),
     ]
     window.history_page.set_entries(entries)
+    window.home_page.set_recent(entries)
+    window._go(0)
+    app.processEvents()
+    window.grab().save(str(out_dir / "01-home.png"))
+
     window._go(2)
     app.processEvents()
     window.grab().save(str(out_dir / "03-history.png"))
@@ -208,6 +213,7 @@ def main() -> None:
     window._checks = checks
     window.stack.setCurrentIndex(3)
     window.nav_buttons[3].setChecked(True)
+    window._refresh_nav_icons()
     app.processEvents()
     window.grab().save(str(out_dir / "04-clinic.png"))
 
@@ -215,12 +221,21 @@ def main() -> None:
     app.processEvents()
     window.grab().save(str(out_dir / "05-settings.png"))
 
-    # light theme variant of the home page for comparison
+    # Light theme is a separate rebuild: icons are built against the active palette,
+    # so switching theme in a live window is intentionally deferred to restart.
+    window.close()
     settings.theme = "light"
     theme.apply_theme(app, "light")
-    window._go(0)
+    window_light = mw_module.MainWindow(settings)
+    window_light.resize(1240, 820)
+    window_light.show()
+    window_light.home_page.url_input.setText(FAKE_INFO["webpage_url"])
+    window_light.home_page.show_media(FAKE_INFO)
+    window_light.home_page.thumb.set_thumbnail(thumb)
+    window_light.home_page.set_recent(entries)
     app.processEvents()
-    window.grab().save(str(out_dir / "06-home-light.png"))
+    window_light.grab().save(str(out_dir / "06-home-light.png"))
+    window_light.close()
 
     print("saved screenshots to", out_dir.resolve())
     window.close()

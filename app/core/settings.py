@@ -29,7 +29,8 @@ class Settings:
     playlist: bool = False
 
     # --- network ----------------------------------------------------------
-    proxy: str = ""  # e.g. http://127.0.0.1:7890
+    proxy_mode: str = "system"  # system | direct | custom
+    proxy: str = ""  # e.g. http://127.0.0.1:7890 (custom mode only)
     rate_limit_kbps: int = 0  # 0 = unlimited
     retries: int = 10
     fragment_concurrency: int = 4
@@ -128,6 +129,11 @@ class Settings:
             self.rate_limit_kbps = 0
         if self.socket_timeout < 5:
             self.socket_timeout = 5
+        if self.proxy_mode not in ("system", "direct", "custom"):
+            self.proxy_mode = "system"
+        if self.proxy_mode != "custom":
+            # Keep the typed value so switching back to custom is painless.
+            pass
         if self.language not in ("auto", "zh", "en"):
             self.language = "auto"
         if self.theme not in ("dark", "light"):
@@ -144,6 +150,17 @@ class Settings:
         path = Path(self.download_dir).expanduser()
         path.mkdir(parents=True, exist_ok=True)
         return path
+
+    @property
+    def effective_proxy(self) -> str:
+        """The proxy URL requests should use; empty string forces direct."""
+        from app.core import netproxy
+
+        if self.proxy_mode == "direct":
+            return ""
+        if self.proxy_mode == "custom":
+            return self.proxy
+        return netproxy.system_proxy()
 
     @property
     def rate_limit_bytes(self) -> int:

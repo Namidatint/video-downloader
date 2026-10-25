@@ -16,8 +16,9 @@ import urllib.request
 from dataclasses import dataclass, field
 
 from app.core import cookies as cookies_mod
-from app.core.errors import (ACTION_COOKIES, ACTION_FFMPEG, ACTION_PROXY,
+from app.core.errors import (ACTION_COOKIES, ACTION_DIRECT, ACTION_FFMPEG, ACTION_PROXY,
                              ACTION_SETTINGS, ACTION_UPDATE, Fix)
+from app.core import netproxy
 from app.core.ffmpeg_tools import find_ffmpeg
 from app.core.settings import Settings
 
@@ -141,21 +142,34 @@ def _network_check(settings: Settings) -> CheckResult:
 
 
 def _proxy_check(settings: Settings) -> CheckResult:
-    if not settings.proxy:
-        return CheckResult("proxy", "代理设置", PASS, "未启用代理（直连）")
-    from urllib.parse import urlparse
+    mode = getattr(settings, "proxy_mode", "system")
+    if mode == "direct":
+        return CheckResult("proxy", "网络模式 / 代理", PASS, "直连模式：不经过任何代理")
 
-    parsed = urlparse(settings.proxy)
-    host = parsed.hostname or ""
-    port = parsed.port or (443 if parsed.scheme == "https" else 80)
-    try:
-        with socket.create_connection((host, port), timeout=4):
-            pass
-        return CheckResult("proxy", "代理设置", PASS, f"{settings.proxy} 可连接")
-    except OSError as exc:
-        return CheckResult("proxy", "代理设置", FAIL,
-                           f"无法连接代理 {host}:{port}（{exc}）",
-                           fix=Fix(ACTION_PROXY, "检查代理", "Check proxy"))
+    if mode == "custom":
+        proxy = settings.proxy
+        if not proxy:
+            return CheckResult("proxy", "网络模式 / 代理", WARN,
+                               "自定义代理模式下地址为空，将按直连处理",
+                               fix=Fix(ACTION_PROXY, "填写代理地址", "Set proxy"))
+        ok, detail = netproxy.probe(proxy)
+        if ok:
+            return CheckResult("proxy", "网络模式 / 代理", PASS, f"自定义代理 {proxy}：{detail}")
+        return CheckResult("proxy", "网络模式 / 代理", FAIL,
+                           f"自定义代理不可用：{detail}",
+                           fix=Fix(ACTION_DIRECT, "改为直连并重试", "Switch to direct"))
+
+    # Follow the OS proxy.
+    proxy = netproxy.system_proxy()
+    if not proxy:
+        return CheckResult("proxy", "网络模式 / 代理", PASS, "跟随系统：系统未启用代理")
+    ok, detail = netproxy.probe(proxy)
+    if ok:
+        return CheckResult("proxy", "网络模式 / 代理", PASS, f"跟随系统：{proxy}（{detail}）")
+    hint = "。如果只是下载国内站点，建议改为直连" if netproxy.is_loopback(proxy) else ""
+    return CheckResult("proxy", "网络模式 / 代理", FAIL,
+                       f"系统代理 {proxy} 不可用：{detail}{hint}",
+                       fix=Fix(ACTION_DIRECT, "改为直连并重试", "Switch to direct"))
 
 
 def _cookies_check(settings: Settings) -> CheckResult:

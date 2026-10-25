@@ -7,8 +7,7 @@ from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QLineEdit, QScrollAr
 
 from app.core import paths
 from app.core.history import HistoryEntry
-from app.ui import icons, widgets
-from app.ui.theme import DARK
+from app.ui import icons, theme, widgets
 
 
 class HistoryRow(QFrame):
@@ -25,7 +24,7 @@ class HistoryRow(QFrame):
         layout.setSpacing(12)
 
         badge = QLabel()
-        badge.setPixmap(icons.pixmap("movie", DARK["accent"], 20))
+        badge.setPixmap(icons.pixmap("movie", theme.active["accent"], 20))
         badge.setFixedWidth(24)
         layout.addWidget(badge, alignment=Qt.AlignTop)
 
@@ -42,7 +41,7 @@ class HistoryRow(QFrame):
         text_box.addWidget(sub)
         layout.addLayout(text_box, 1)
 
-        folder_btn = widgets.IconButton("folder", "在文件夹中显示", 17, DARK["muted"])
+        folder_btn = widgets.IconButton("folder", "在文件夹中显示", 17, theme.active["muted"])
         folder_btn.clicked.connect(lambda: self.reveal_requested.emit(entry))
         layout.addWidget(folder_btn)
 
@@ -50,7 +49,7 @@ class HistoryRow(QFrame):
         again.clicked.connect(lambda: self.redownload_requested.emit(entry))
         layout.addWidget(again)
 
-        delete = widgets.IconButton("trash", "从历史中移除", 16, DARK["dim"])
+        delete = widgets.IconButton("trash", "从历史中移除", 16, theme.active["dim"])
         delete.clicked.connect(lambda: self.delete_requested.emit(entry))
         layout.addWidget(delete)
 

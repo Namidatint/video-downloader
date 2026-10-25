@@ -22,6 +22,7 @@ ACTION_LOGIN = "open_login"
 ACTION_DIAGNOSTICS = "open_diagnostics"
 ACTION_FFMPEG = "fix_ffmpeg"
 ACTION_PROXY = "open_proxy"
+ACTION_DIRECT = "use_direct"
 ACTION_UPDATE = "update_core"
 ACTION_OPEN_DIR = "open_output_dir"
 ACTION_OPEN_URL = "open_url"
@@ -248,6 +249,21 @@ RULES: tuple[_Rule, ...] = (
                Fix(ACTION_PROXY, "配置代理", "Configure proxy")),
     ),
     _rule(
+        "proxy_refused",
+        r"Connection refused|ConnectionRefused|Errno 61|TransportError|"
+        r"Failed to connect to (?:the )?proxy|proxy.*(?:refused|unreachable)",
+        "本地代理端口没有响应",
+        "请求被转发到本机代理端口（常见于 Clash / Surge / V2Ray / 公司 VPN），但该端口没有程序在监听。"
+        "请启动代理软件；如果只是下载国内站点（B 站、抖音），把网络模式改为「直连」即可。",
+        "Local proxy is not responding",
+        "Requests were routed to a local proxy port that nothing is listening on "
+        "(Clash / Surge / V2Ray / corporate VPN). Start the proxy app, or switch the "
+        "network mode to Direct for domestic sites.",
+        fixes=(Fix(ACTION_DIRECT, "改为直连并重试", "Switch to direct and retry"),
+               Fix(ACTION_PROXY, "打开网络设置", "Open network settings"),
+               Fix(ACTION_RETRY, "重试", "Retry")),
+    ),
+    _rule(
         "proxy_error",
         r"ProxyError|Unable to connect to proxy|proxy.*(?:refused|failed)|"
         r"Cannot connect to proxy",
@@ -255,7 +271,8 @@ RULES: tuple[_Rule, ...] = (
         "检查代理地址与端口是否正确、代理软件是否在运行；不需要代理时请留空。",
         "Proxy connection failed",
         "Verify the proxy host/port and that the proxy app is running; leave it empty if unused.",
-        fixes=(Fix(ACTION_PROXY, "打开代理设置", "Open proxy settings"),
+        fixes=(Fix(ACTION_DIRECT, "改为直连并重试", "Switch to direct and retry"),
+               Fix(ACTION_PROXY, "打开代理设置", "Open proxy settings"),
                Fix(ACTION_RETRY, "重试", "Retry")),
     ),
     _rule(

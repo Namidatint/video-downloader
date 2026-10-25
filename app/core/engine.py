@@ -105,7 +105,11 @@ def ytdlp_version() -> str:
 
 
 def _apply_network_options(opts: dict[str, Any], settings: Settings) -> None:
-    if settings.proxy:
+    mode = getattr(settings, "proxy_mode", "system")
+    if mode == "direct":
+        # Explicit empty string tells yt-dlp to bypass the OS/environment proxy.
+        opts["proxy"] = ""
+    elif mode == "custom" and settings.proxy:
         opts["proxy"] = settings.proxy
     if settings.rate_limit_bytes:
         opts["ratelimit"] = settings.rate_limit_bytes
@@ -113,9 +117,6 @@ def _apply_network_options(opts: dict[str, Any], settings: Settings) -> None:
         opts.setdefault("http_headers", {})["User-Agent"] = settings.user_agent
     if settings.referer:
         opts.setdefault("http_headers", {})["Referer"] = settings.referer
-    elif settings.proxy:
-        # Nothing to do; kept explicit for readability.
-        pass
 
 
 def _apply_cookies(opts: dict[str, Any], settings: Settings) -> None:

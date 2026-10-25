@@ -8,17 +8,16 @@ from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButt
 
 from app.core import diagnostics
 from app.core.errors import Problem, catalog
-from app.ui import icons, widgets
-from app.ui.theme import DARK
+from app.ui import icons, theme, widgets
 
 
 class _Dot(QLabel):
     def __init__(self, status: str, parent: QWidget | None = None):
         super().__init__(parent)
-        color = {"pass": DARK["success"], "warn": DARK["warn"], "fail": DARK["danger"]}.get(
-            status, DARK["muted"])
-        self.setFixedSize(9, 9)
-        self.setStyleSheet(f"background: {color}; border-radius: 4px;")
+        color = {"pass": theme.active["success"], "warn": theme.active["warn"], "fail": theme.active["danger"]}.get(
+            status, theme.active["muted"])
+        self.setFixedSize(8, 8)
+        self.setStyleSheet(f"background: {color};")
 
 
 class CheckRow(QFrame):
@@ -61,8 +60,12 @@ class ProblemRow(QFrame):
         outer.setSpacing(6)
 
         header = QHBoxLayout()
-        header.setSpacing(8)
-        self.toggle = QPushButton("▸  " + problem.title)
+        header.setSpacing(9)
+        self.marker = QLabel()
+        self.marker.setFixedSize(7, 7)
+        self.marker.setStyleSheet(f"background: transparent; border: 1px solid {theme.active['muted']};")
+        header.addWidget(self.marker, alignment=Qt.AlignVCenter)
+        self.toggle = QPushButton(problem.title)
         self.toggle.setProperty("role", "quiet")
         self.toggle.setCursor(Qt.PointingHandCursor)
         self.toggle.setStyleSheet("text-align: left; font-weight: 600; font-size: 13.5px;")
@@ -106,7 +109,11 @@ class ProblemRow(QFrame):
     def _toggle(self) -> None:
         self._expanded = not self._expanded
         self.body.setVisible(self._expanded)
-        self.toggle.setText(("▾  " if self._expanded else "▸  ") + self.problem.title)
+        self.marker.setStyleSheet(
+            "background: %s; border: 1px solid %s;"
+            % (theme.active["accent"] if self._expanded else "transparent",
+               theme.active["accent"] if self._expanded else theme.active["muted"])
+        )
 
     def matches(self, needle: str) -> bool:
         if not needle:
@@ -152,7 +159,7 @@ class ClinicPage(QWidget):
         banner_layout.setContentsMargins(18, 14, 18, 14)
         banner_layout.setSpacing(14)
         self.banner_icon = QLabel()
-        self.banner_icon.setPixmap(icons.pixmap("pulse", DARK["accent"], 28))
+        self.banner_icon.setPixmap(icons.pixmap("pulse", theme.active["accent"], 28))
         banner_layout.addWidget(self.banner_icon)
         text_box = QVBoxLayout()
         text_box.setSpacing(3)
@@ -280,19 +287,19 @@ class ClinicPage(QWidget):
         fails = [c for c in checks if c.status == diagnostics.FAIL]
         warns = [c for c in checks if c.status == diagnostics.WARN]
         if overall == diagnostics.PASS:
-            self.banner_icon.setPixmap(icons.pixmap("check", DARK["success"], 28))
+            self.banner_icon.setPixmap(icons.pixmap("check", theme.active["success"], 28))
             self.banner_title.setText("一切正常，可以开始下载")
             self.banner_detail.setText("内核、ffmpeg、网络与证书链均已就绪。")
             self.banner_pill.setText("健康")
             self.banner_pill.set_kind("ok")
         elif overall == diagnostics.WARN:
-            self.banner_icon.setPixmap(icons.pixmap("warn", DARK["warn"], 28))
+            self.banner_icon.setPixmap(icons.pixmap("warn", theme.active["warn"], 28))
             self.banner_title.setText(f"{len(warns)} 项建议优化")
             self.banner_detail.setText("这些不是致命问题，但可能影响高清下载或速度。")
             self.banner_pill.setText("可用")
             self.banner_pill.set_kind("warn")
         else:
-            self.banner_icon.setPixmap(icons.pixmap("error", DARK["danger"], 28))
+            self.banner_icon.setPixmap(icons.pixmap("error", theme.active["danger"], 28))
             self.banner_title.setText(f"发现 {len(fails)} 个需要修复的问题")
             self.banner_detail.setText("按下列条目的“修复”按钮处理，或查看报错百科寻找对应说明。")
             self.banner_pill.setText("需修复")

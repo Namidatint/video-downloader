@@ -102,6 +102,16 @@ def test_enqueue_and_progress(window):
     assert "403" not in card.title_label.text()
 
 
+def test_network_mode_setting(window):
+    page = window.settings_page
+    index = page.proxy_mode_combo.findData("direct")
+    page.proxy_mode_combo.setCurrentIndex(index)
+    assert window.settings.proxy_mode == "direct"
+    assert page.proxy_edit.isEnabled() is False
+    page.proxy_mode_combo.setCurrentIndex(page.proxy_mode_combo.findData("custom"))
+    assert page.proxy_edit.isEnabled() is True
+
+
 def test_history_page_rows(window):
     from app.core.history import HistoryEntry
 
@@ -115,6 +125,10 @@ def test_theme_switch(window, app):
     from app.ui import theme
 
     theme.apply_theme(app, "light")
-    assert "F3F5FA" in app.styleSheet()
+    stylesheet = app.styleSheet()
+    assert "F0ECE3" in stylesheet
+    # The brief pins a square, flat, low-render world.
+    assert "border-radius" not in stylesheet
+    assert "qlineargradient" not in stylesheet
     theme.apply_theme(app, "dark")
-    assert "0A0D13" in app.styleSheet()
+    assert "0B0A09" in app.styleSheet()

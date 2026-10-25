@@ -40,14 +40,27 @@
 |---|---|
 | ![history](docs/screenshots/03-history.png) | ![light](docs/screenshots/06-home-light.png) |
 
-上表由 `scripts/preview_ui.py` 离线生成。下面两张是**打包后的 `.app` 实机运行**（不是设计稿）：
-解析本地 HTTP 视频 → 入队下载 → 历史记录落盘。
-
-| 实机：解析完成 | 实机：队列完成 |
-|---|---|
-| ![live-home](docs/screenshots/live-parsed.png) | ![live-queue](docs/screenshots/live-queue.png) |
+上表由 `scripts/preview_ui.py` 离线生成（与打包版共用同一套代码与主题）；
+macOS `.app` 已在本机启动验证：解析本地 HTTP 视频 → 入队下载 → 历史落盘全链路通过。
 
 ---
+
+## 设计语言：反向接触印相 / 资产清单
+
+界面按本次要求整体重做：**卡片式、零圆角、低渲染压力、简洁、对比度更强**。
+世界取自视频素材归档：暖黑工作台、纸白墨、1px 发丝线、方形状态点、等宽读数。导航与控件仍是
+桌面工具熟悉的形态，视觉只借来字体、配色、密度和一个标志性动作——**时间码 / 清单读数**。
+
+- **零圆角**：卡片、按钮、输入框、标签、复选框、进度条、滚动条全部为直角。
+- **零装饰**：无渐变、无阴影、无模糊、无透明度动画；层级只靠底色明度、1px 线和间距。
+- **状态色只做状态**：绿=完成、琥珀=进行中/暂停、红=失败；唯一的强调色是纸白。
+- **对比更强**：正文 `#F7F4ED` on `#131110`，约 16:1；次要文本 ≥ 4.5:1。
+- **低渲染压力**：纯色填充 + 直线绘制，进度/滚动/窗口重绘在低配机器上也不掉帧。
+- **可读的数字**：内核版本、时间码、体积、速度、进度百分比统一等宽、带单位、右对齐。
+
+设计规范（token、组件、Do/Don't）见 [DESIGN.md](DESIGN.md)，机器可读 sidecar 在
+[.impeccable/design.json](.impeccable/design.json)；设计方向的来源记录在
+[方向契约](.impeccable/surfaces/app-ui-main-window-py.md)。
 
 ## 三、功能
 
@@ -62,13 +75,14 @@
 **跨平台**
 - macOS：`GlowDL.app` / `.dmg`（PyInstaller + ad-hoc 签名）。
 - Windows：`GlowDL.exe` one-dir 压缩包（附 `.ico` 图标、SmartScreen 说明）。
-- 统一使用系统原生窗口、HiDPI、深浅两套主题、系统托盘通知。
+- 统一使用系统原生窗口、HiDPI、深浅两套主题（切换后重启生效）、系统托盘通知。
 
 **稳定性**
 - 内置 **ffmpeg**（`imageio-ffmpeg` wheel），不再出现「找不到 ffmpeg / 无法合并音视频」。
 - **浏览器 Cookie 直读**（Chrome / Edge / Firefox / Safari / Brave / Chromium / Opera / Vivaldi）+
   `cookies.txt` / Cookie-Editor JSON 导入与格式转换。
-- 网络：代理、限速、重试、分片并发、User-Agent / Referer 覆盖、系统证书兜底（certifi）。
+- 网络：**网络模式（跟随系统 / 直连 / 自定义代理）**、限速、重试、分片并发、
+  User-Agent / Referer 覆盖、系统证书兜底（certifi）。
 - **问题诊所**：10 项环境自检 + 24 条报错百科；错误会被翻译成中文并附「一键修复」按钮。
 - **内核热更新**：应用内检查并更新 yt-dlp（打包版也可更新，无需重装 200MB 安装包）。
 - 下载历史（标题 / 站点 / 画质 / 体积 / 时间）+ 一键定位文件。
@@ -148,6 +162,23 @@ python -m app.main --cli "URL" -q 1080 -o ~/Downloads/GlowDL   # 无界面下载
 
 ---
 
+## 六点五、网络报错速修
+
+**现象**：解析时报 `Unable to download webpage: <urlopen error [Errno 61] Connection refused>` 或
+`本地代理端口没有响应`，但浏览器能打开 B 站。
+
+**原因**：macOS/Windows 的系统代理仍指向本机端口（如 `127.0.0.1:7890` / `127.0.0.1:26561`），
+代理软件（Clash / Surge / V2Ray / VPN）却已经退出，所有请求都被转发到一个没人监听的端口。
+
+**修复（任选其一）**
+
+1. **最快**：错误卡片上点「改为直连并重试」；或到 **设置 → 网络模式 → 直连**。国内站点不需要代理。
+2. 重新启动代理软件，确认系统代理端口与设置里的一致。
+3. 关闭系统代理：macOS 系统设置 → 网络 → 代理；Windows 设置 → 网络和 Internet → 代理。
+4. 点侧边栏「运行环境自检」，新版本会直接检查系统代理端口是否可连接。
+
+> 从 v1.0.0 起，「留空代理」不再等于直连：默认是「跟随系统」。要彻底绕过系统代理，必须显式选择「直连」。
+
 ## 七、工程结构
 
 ```text
@@ -174,7 +205,7 @@ glowdl/
 │       ├── widgets.py         # 卡片/缩略图/Toast/图片异步加载
 │       ├── workers.py         # QThread 工作线程
 │       └── pages/             # 下载 / 队列 / 历史 / 问题诊所 / 设置
-├── tests/                     # pytest：核心 58 项 + 本地 HTTP 真下载
+├── tests/                     # pytest：核心 + 本地 HTTP 真下载，共 64 项
 ├── scripts/
 │   ├── build_macos.sh         # .app + .dmg
 │   ├── build_windows.ps1      # .exe + zip
@@ -205,7 +236,7 @@ python -m app.main --diagnose
 
 当前结果：
 
-- **58 项测试全部通过**（单元 + 本地集成 + GUI 冒烟）。
+- **64 项测试全部通过**（单元 + 本地集成 + GUI 冒烟）。
 - 本地 HTTP 集成测试会用 ffmpeg 生成一段真实 mp4，经 `engine.download()` 下载、转 MP3、并验证取消后
   `.part` 文件保留。
 - `scripts/preview_ui.py` 可在无网络、无窗口环境下重新生成 `docs/screenshots/` 里的全部界面截图。
@@ -244,13 +275,11 @@ GitHub Actions 已配置双平台矩阵，推送 tag 即可在 Actions 里下载
 | 3 | 设置 → 登录态 Cookie → 选择已登录浏览器 → 重试 1080P | 原本 480P 的视频可下 1080P+ |
 | 4 | 问题诊所 → 重新自检 | 10 项检查 6 秒内出结果；有问题的项带「修复」 |
 | 5 | 断网状态下粘贴链接 | 出现中文错误卡片 + 重试/配置代理按钮，而不是 traceback |
-| 6 | `pytest -q` | 58 passed |
+| 6 | `pytest -q` | 64 passed |
 | 7 | `bash scripts/build_macos.sh` | 重新产出 `.app` 与 `.dmg` |
 
-**本仓库已在本机验证**：macOS 15 / Python 3.10.11 上完成打包与实机下载（见上方「实机」截图），
-本地 HTTP 视频经 GUI 解析 → 下载 → 历史落盘全链路通过。
-
-![first-run](docs/screenshots/00-first-run.png)
+**本仓库已在本机验证**：macOS 15 / Python 3.10.11 上完成打包，打包版启动、解析本地 HTTP 视频、
+下载、历史落盘全链路通过。
 
 **已知限制（如实说明）**
 

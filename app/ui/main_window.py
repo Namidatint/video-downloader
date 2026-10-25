@@ -50,6 +50,7 @@ class MainWindow(QMainWindow):
         self._update_worker: UpdateWorker | None = None
         self._checks: list[diagnostics.CheckResult] = []
         self._paused_all = False
+        self._applied_theme = settings.theme
 
         self._build_ui()
         self._connect_signals()
@@ -112,6 +113,7 @@ class MainWindow(QMainWindow):
         self.nav_group = QButtonGroup(self)
         self.nav_group.setExclusive(True)
         self.nav_buttons: list[QPushButton] = []
+        self._nav_icon_names = ["download", "list", "clock", "pulse", "gear"]
         for index, (icon_name, label) in enumerate((
             ("download", "下载"),
             ("list", "队列"),
@@ -123,7 +125,7 @@ class MainWindow(QMainWindow):
             button.setObjectName("NavButton")
             button.setCheckable(True)
             button.setCursor(Qt.PointingHandCursor)
-            button.setIcon(icons.icon(icon_name, theme.DARK["muted"], 18))
+            button.setIcon(icons.icon(icon_name, theme.active["muted"], 18))
             button.setIconSize(QSize(18, 18))
             button.setMinimumHeight(40)
             button.clicked.connect(lambda _=False, i=index: self._go(i))
@@ -131,6 +133,7 @@ class MainWindow(QMainWindow):
             self.nav_buttons.append(button)
             layout.addWidget(button)
         self.nav_buttons[0].setChecked(True)
+        self._refresh_nav_icons()
 
         layout.addStretch(1)
 
@@ -142,7 +145,7 @@ class MainWindow(QMainWindow):
         self.selfcheck_btn = QPushButton("运行环境自检")
         self.selfcheck_btn.setObjectName("NavButton")
         self.selfcheck_btn.setCursor(Qt.PointingHandCursor)
-        self.selfcheck_btn.setIcon(icons.icon("pulse", theme.DARK["muted"], 16))
+        self.selfcheck_btn.setIcon(icons.icon("pulse", theme.active["muted"], 16))
         self.selfcheck_btn.clicked.connect(self._selfcheck_clicked)
         layout.addWidget(self.selfcheck_btn)
 
@@ -157,6 +160,8 @@ class MainWindow(QMainWindow):
         home.download_requested.connect(self._enqueue)
         home.fix_requested.connect(self._handle_fix)
         home.settings_page_requested.connect(lambda: self._go(4))
+        home.history_requested.connect(lambda: self._go(2))
+        home.open_path_requested.connect(paths.open_in_file_manager)
 
         q = self.queue_page
         q.cancel_requested.connect(self._cancel_task)
@@ -181,10 +186,20 @@ class MainWindow(QMainWindow):
         s.toast_requested.connect(lambda text, kind: self.toast.show_message(text, kind))
 
     # ------------------------------------------------------------- helpers
+    def _refresh_nav_icons(self) -> None:
+        current = self.stack.currentIndex() if hasattr(self, "stack") else 0
+        for index, button in enumerate(self.nav_buttons):
+            name = self._nav_icon_names[index]
+            color = theme.active["accent_text"] if index == current else theme.active["muted"]
+            button.setIcon(icons.icon(name, color, 18))
+        if hasattr(self, "selfcheck_btn"):
+            self.selfcheck_btn.setIcon(icons.icon("pulse", theme.active["muted"], 16))
+
     def _go(self, index: int) -> None:
         if 0 <= index < self.stack.count():
             self.stack.setCurrentIndex(index)
             self.nav_buttons[index].setChecked(True)
+            self._refresh_nav_icons()
         if index == 2:
             self._refresh_history()
         elif index == 3 and not self._checks:
@@ -445,7 +460,9 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------ history
     def _refresh_history(self) -> None:
         self.history.limit = self.settings.max_history
-        self.history_page.set_entries(self.history.entries)
+        entries = self.history.entries
+        self.history_page.set_entries(entries)
+        self.home_page.set_recent(entries[:3])
 
     def _redownload(self, url: str, title: str, preset: str) -> None:
         task = DownloadTask(url=url, title=title, preset=preset or "best", site="视频")
@@ -549,6 +566,17 @@ class MainWindow(QMainWindow):
                 self._go(1)
         elif action in (ACTION_SETTINGS, ACTION_PROXY):
             self._go(4)
+        elif action == ACTION_DIRECT:
+            self.settings.proxy_mode = "direct"
+            self.settings.validate()
+            self.settings.save()
+            self.settings_page.load_from_settings()
+            self.toast.show_message("已切换为直连模式，正在重试…", "ok")
+            url = source_url or self.home_page.url_input.text().strip()
+            if url:
+                self._go(0)
+                self.home_page.url_input.setText(url)
+                self._start_probe(url, self.settings.playlist)
         elif action == ACTION_COOKIES:
             self._go(4)
             self.toast.show_message("在「登录态 Cookie」中选择你已登录的浏览器", "info")
@@ -579,7 +607,10 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------ settings
     def _on_settings_changed(self) -> None:
         self.lang = self.settings.effective_language()
-        theme.apply_theme(QApplication.instance(), self.settings.theme)
+        if self.settings.theme != self._applied_theme:
+            self._applied_theme = self.settings.theme
+            self.toast.show_message("主题已保存，重启应用后生效", "info")
+        self.home_page.refresh_manifest()
         self.clinic_page.reload_handbook()
         self._refresh_history()
         self._refresh_queue_state()

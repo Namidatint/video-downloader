@@ -7,16 +7,16 @@ from typing import Any
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QStandardItemModel
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QFileDialog, QFrame, QHBoxLayout, QLabel,
-                               QLineEdit, QPlainTextEdit, QPushButton, QVBoxLayout,
-                               QWidget)
+                               QLineEdit, QPlainTextEdit, QPushButton, QScrollArea,
+                               QVBoxLayout, QWidget)
 
+from app.core import engine
 from app.core import formats as fmt
 from app.core import paths
 from app.core.errors import Problem
 from app.core.settings import Settings
 from app.core.tasks import DownloadTask
-from app.ui import icons, widgets
-from app.ui.theme import DARK
+from app.ui import icons, theme, widgets
 
 SITE_LABELS = {
     "youtube": "YouTube",
@@ -55,6 +55,8 @@ class HomePage(QWidget):
     download_requested = Signal(object)  # DownloadTask
     fix_requested = Signal(str, object, str)  # action, problem, url
     settings_changed = Signal()
+    history_requested = Signal()
+    open_path_requested = Signal(str)
     settings_page_requested = Signal()
 
     def __init__(self, settings: Settings, image_loader, parent: QWidget | None = None):
@@ -69,9 +71,18 @@ class HomePage(QWidget):
 
     # ------------------------------------------------------------------ UI
     def _build_ui(self) -> None:
-        root = QVBoxLayout(self)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        content = QWidget()
+        root = QVBoxLayout(content)
         root.setContentsMargins(30, 26, 30, 24)
         root.setSpacing(16)
+        scroll.setWidget(content)
+        outer.addWidget(scroll)
 
         heading = QHBoxLayout()
         box = QVBoxLayout()
@@ -103,7 +114,7 @@ class HomePage(QWidget):
         self.url_input.textChanged.connect(self._on_url_changed)
         row.addWidget(self.url_input, 1)
 
-        paste_btn = widgets.IconButton("copy", "从剪贴板粘贴", 18, DARK["muted"])
+        paste_btn = widgets.IconButton("copy", "从剪贴板粘贴", 18, theme.active["muted"])
         paste_btn.setFixedSize(42, 42)
         paste_btn.clicked.connect(self._paste)
         row.addWidget(paste_btn)
@@ -155,6 +166,11 @@ class HomePage(QWidget):
         self.media_card.hide()
         root.addWidget(self.media_card)
 
+        # --- recent ledger ----------------------------------------------
+        self.recent_card = self._build_recent_card()
+        self.recent_card.hide()
+        root.addWidget(self.recent_card)
+
         # --- empty state ------------------------------------------------
         self.empty = widgets.EmptyState(
             "download",
@@ -165,34 +181,115 @@ class HomePage(QWidget):
         )
         root.addWidget(self.empty, 1)
 
-        # --- feature strip ---------------------------------------------
-        strip = QHBoxLayout()
-        strip.setSpacing(12)
-        for icon_name, title_text, sub_text in (
-            ("movie", "画质与音轨自动合并", "内置 ffmpeg，4K 也能音画同步"),
-            ("link", "登录态一键读取", "浏览器 Cookie 直读，1080P+ 不再 403"),
-            ("pulse", "出错说人话", "问题诊所给出原因与一键修复"),
-        ):
-            card = widgets.Card(soft=True)
-            card_layout = QHBoxLayout(card)
-            card_layout.setContentsMargins(14, 12, 14, 12)
-            card_layout.setSpacing(10)
-            badge = QLabel()
-            badge.setPixmap(icons.pixmap(icon_name, DARK["accent"], 22))
-            card_layout.addWidget(badge, alignment=Qt.AlignTop)
-            text_box = QVBoxLayout()
-            text_box.setSpacing(1)
-            t = QLabel(title_text)
-            t.setObjectName("SectionTitle")
-            s = QLabel(sub_text)
-            s.setObjectName("Dim")
-            s.setWordWrap(True)
-            text_box.addWidget(t)
-            text_box.addWidget(s)
-            card_layout.addLayout(text_box, 1)
-            strip.addWidget(card, 1)
-        root.addLayout(strip)
+        # --- manifest strip --------------------------------------------
+        self.manifest = widgets.Card()
+        manifest_layout = QHBoxLayout(self.manifest)
+        manifest_layout.setContentsMargins(0, 0, 0, 0)
+        manifest_layout.setSpacing(0)
+        self.manifest_values: dict[str, QLabel] = {}
+        cells = (
+            ("kernel", "内核", 2),
+            ("path", "保存到", 4),
+            ("concurrency", "同时下载", 1),
+            ("sites", "站点覆盖", 2),
+        )
+        for index, (key, label, stretch) in enumerate(cells):
+            cell = QWidget()
+            cell_layout = QVBoxLayout(cell)
+            cell_layout.setContentsMargins(16, 11, 16, 11)
+            cell_layout.setSpacing(2)
+            caption = QLabel(label)
+            caption.setObjectName("Dim")
+            cell_layout.addWidget(caption)
+            if key == "path":
+                value = widgets.ElidedLabel(self.settings.download_dir)
+                value.setObjectName("MonoDim")
+            else:
+                value = QLabel("")
+                value.setObjectName("Mono" if key in ("kernel", "concurrency") else "Muted")
+                if key == "sites":
+                    value.setText("1800+ · 高清需登录 Cookie")
+            self.manifest_values[key] = value
+            cell_layout.addWidget(value)
+            manifest_layout.addWidget(cell, stretch)
+            if index < len(cells) - 1:
+                separator = QFrame()
+                separator.setFixedWidth(1)
+                separator.setStyleSheet(f"background: {theme.active['border']};")
+                manifest_layout.addWidget(separator)
         root.addStretch(1)
+        root.addWidget(self.manifest)
+        self.refresh_manifest()
+
+    def refresh_manifest(self) -> None:
+        self.manifest_values["kernel"].setText(f"yt-dlp {engine.ytdlp_version()}")
+        self.manifest_values["path"].setText(self.settings.download_dir)
+        self.manifest_values["concurrency"].setText(f"{self.settings.max_concurrent} 个")
+
+    def _build_recent_card(self) -> QFrame:
+        card = widgets.Card()
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        head = QWidget()
+        head_layout = QHBoxLayout(head)
+        head_layout.setContentsMargins(16, 11, 12, 11)
+        head_layout.setSpacing(8)
+        title = QLabel("最近完成")
+        title.setObjectName("SectionTitle")
+        head_layout.addWidget(title)
+        head_layout.addStretch(1)
+        all_btn = QPushButton("全部历史")
+        all_btn.setProperty("role", "quiet")
+        all_btn.setCursor(Qt.PointingHandCursor)
+        all_btn.clicked.connect(self.history_requested.emit)
+        head_layout.addWidget(all_btn)
+        layout.addWidget(head)
+        layout.addWidget(widgets.hline())
+        self.recent_rows = QVBoxLayout()
+        self.recent_rows.setContentsMargins(0, 0, 0, 0)
+        self.recent_rows.setSpacing(0)
+        layout.addLayout(self.recent_rows)
+        return card
+
+    def set_recent(self, entries) -> None:
+        while self.recent_rows.count():
+            item = self.recent_rows.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.hide()
+                widget.setParent(None)
+                widget.deleteLater()
+        entries = list(entries or [])[:3]
+        self.recent_card.setVisible(bool(entries))
+        for index, entry in enumerate(entries):
+            row = QWidget()
+            row_layout = QHBoxLayout(row)
+            row_layout.setContentsMargins(16, 8, 12, 8)
+            row_layout.setSpacing(10)
+            mark = QLabel()
+            mark.setFixedSize(6, 6)
+            mark.setStyleSheet(f"background: {theme.active['success']};")
+            row_layout.addWidget(mark)
+            title = widgets.ElidedLabel(entry.title or entry.url)
+            title.setObjectName("CardTitle")
+            row_layout.addWidget(title, 1)
+            meta = QLabel(entry.site or "视频")
+            meta.setObjectName("Dim")
+            row_layout.addWidget(meta)
+            size = QLabel(paths.human_size(entry.filesize) if entry.filesize else "")
+            size.setObjectName("MonoDim")
+            row_layout.addWidget(size)
+            when = QLabel(entry.when)
+            when.setObjectName("MonoDim")
+            row_layout.addWidget(when)
+            reveal = widgets.IconButton("folder", "在文件夹中显示", 15, theme.active["muted"])
+            reveal.clicked.connect(
+                lambda _=False, path=entry.filepath: self.open_path_requested.emit(path))
+            row_layout.addWidget(reveal)
+            self.recent_rows.addWidget(row)
+            if index < len(entries) - 1:
+                self.recent_rows.addWidget(widgets.hline())
 
     def _build_error_card(self) -> QFrame:
         card = widgets.Card()
@@ -202,12 +299,12 @@ class HomePage(QWidget):
         top = QHBoxLayout()
         top.setSpacing(10)
         icon_label = QLabel()
-        icon_label.setPixmap(icons.pixmap("error", DARK["danger"], 22))
+        icon_label.setPixmap(icons.pixmap("error", theme.active["danger"], 22))
         top.addWidget(icon_label, alignment=Qt.AlignTop)
         self.err_title = QLabel("解析失败")
         self.err_title.setObjectName("CardTitle")
         top.addWidget(self.err_title, 1)
-        close = widgets.IconButton("close", "关闭", 14, DARK["dim"])
+        close = widgets.IconButton("close", "关闭", 14, theme.active["dim"])
         close.clicked.connect(lambda: self.error_card.hide())
         top.addWidget(close)
         layout.addLayout(top)
@@ -243,7 +340,7 @@ class HomePage(QWidget):
 
         body = QHBoxLayout()
         body.setSpacing(18)
-        self.thumb = widgets.Thumbnail(282, 159, 12)
+        self.thumb = widgets.Thumbnail(260, 146, 0)
         body.addWidget(self.thumb, alignment=Qt.AlignTop)
 
         info_box = QVBoxLayout()
@@ -254,11 +351,11 @@ class HomePage(QWidget):
         self.site_badge = QLabel("站点")
         self.site_badge.setObjectName("Badge")
         meta_row.addWidget(self.site_badge)
-        self.uploader_label = QLabel("")
+        self.uploader_label = widgets.ElidedLabel("")
         self.uploader_label.setObjectName("Muted")
         meta_row.addWidget(self.uploader_label)
         self.duration_label = QLabel("")
-        self.duration_label.setObjectName("Dim")
+        self.duration_label.setObjectName("MonoDim")
         meta_row.addWidget(self.duration_label)
         self.views_label = QLabel("")
         self.views_label.setObjectName("Dim")
@@ -266,16 +363,12 @@ class HomePage(QWidget):
         meta_row.addStretch(1)
         info_box.addLayout(meta_row)
 
-        self.title_label = QLabel("")
-        self.title_label.setObjectName("CardTitle")
-        self.title_label.setWordWrap(True)
-        self.title_label.setMaximumHeight(52)
+        self.title_label = widgets.ElidedLabel("")
+        self.title_label.setObjectName("MediaTitle")
         info_box.addWidget(self.title_label)
 
-        self.desc_label = QLabel("")
+        self.desc_label = widgets.ElidedLabel("")
         self.desc_label.setObjectName("Muted")
-        self.desc_label.setWordWrap(True)
-        self.desc_label.setMaximumHeight(38)
         info_box.addWidget(self.desc_label)
 
         quality_row = QHBoxLayout()
@@ -284,18 +377,19 @@ class HomePage(QWidget):
         q_label.setObjectName("SectionHint")
         quality_row.addWidget(q_label)
         self.preset_combo = QComboBox()
-        self.preset_combo.setMinimumWidth(230)
+        self.preset_combo.setMinimumWidth(200)
         self.preset_combo.currentIndexChanged.connect(self._on_preset_changed)
-        quality_row.addWidget(self.preset_combo)
-        self.preset_hint = QLabel("")
-        self.preset_hint.setObjectName("Dim")
-        quality_row.addWidget(self.preset_hint, 1)
+        quality_row.addWidget(self.preset_combo, 1)
         formats_btn = QPushButton("全部格式")
         formats_btn.setProperty("role", "ghost")
         formats_btn.setCursor(Qt.PointingHandCursor)
         formats_btn.clicked.connect(self._show_formats)
         quality_row.addWidget(formats_btn)
         info_box.addLayout(quality_row)
+        self.preset_hint = QLabel("")
+        self.preset_hint.setObjectName("Dim")
+        self.preset_hint.setWordWrap(True)
+        info_box.addWidget(self.preset_hint)
 
         option_row = QHBoxLayout()
         option_row.setSpacing(16)
@@ -310,13 +404,11 @@ class HomePage(QWidget):
         option_row.addStretch(1)
         info_box.addLayout(option_row)
 
-        info_box.addStretch(1)
-
         bottom = QHBoxLayout()
         bottom.setSpacing(8)
-        self.dir_label = QLabel(self.settings.download_dir)
+        self.dir_label = widgets.ElidedLabel(self.settings.download_dir)
         self.dir_label.setObjectName("Dim")
-        folder_btn = widgets.IconButton("folder", "更改下载目录", 16, DARK["muted"])
+        folder_btn = widgets.IconButton("folder", "更改下载目录", 16, theme.active["muted"])
         folder_btn.clicked.connect(self._choose_dir)
         bottom.addWidget(QLabel("保存到"))
         bottom.addWidget(self.dir_label, 1)

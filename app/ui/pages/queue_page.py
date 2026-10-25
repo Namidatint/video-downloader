@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QProgressBar, QScrollArea, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QProgressBar, QScrollArea,
+                               QVBoxLayout, QWidget)
 
 from app.core import formats as fmt
 from app.core import paths
 from app.core.tasks import (CANCELLED, DONE, FAILED, POSTPROCESS, QUEUED, RUNNING,
                             DownloadTask)
-from app.ui import widgets
-from app.ui.theme import DARK
+from app.ui import theme, widgets
 
 
 class TaskCard(QFrame):
@@ -33,7 +33,7 @@ class TaskCard(QFrame):
 
         top = QHBoxLayout()
         top.setSpacing(12)
-        self.thumb = widgets.Thumbnail(112, 63, 8)
+        self.thumb = widgets.Thumbnail(112, 63, 0)
         top.addWidget(self.thumb, alignment=Qt.AlignTop)
 
         middle = QVBoxLayout()
@@ -76,7 +76,7 @@ class TaskCard(QFrame):
         self.folder_btn.clicked.connect(lambda: self.folder_requested.emit(self.task_id))
         bottom.addWidget(self.folder_btn)
 
-        self.remove_btn = widgets.IconButton("close", "移除", 14, DARK["dim"])
+        self.remove_btn = widgets.IconButton("close", "移除", 14, theme.active["dim"])
         self.remove_btn.clicked.connect(lambda: self.remove_requested.emit(self.task_id))
         bottom.addWidget(self.remove_btn)
 
@@ -86,16 +86,14 @@ class TaskCard(QFrame):
 
     # ------------------------------------------------------------- update
     def _style_progress(self, status: str) -> None:
-        if status == FAILED:
-            colors = "#FF6B7A, #FF9A6B"
-        elif status == CANCELLED:
-            colors = "#FFB35C, #FFD36B"
-        else:
-            colors = "#6C8CFF, #9B6CFF"
+        chunk = {
+            FAILED: theme.active["danger"],
+            CANCELLED: theme.active["warn"],
+            DONE: theme.active["success"],
+        }.get(status, theme.active["accent"])
         self.progress.setStyleSheet(
-            "QProgressBar { background: #1A2233; border: none; border-radius: 4px; }"
-            f"QProgressBar::chunk {{ border-radius: 4px; background: qlineargradient("
-            f"x1:0, y1:0, x2:1, y2:0, stop:0 {colors.split(',')[0]}, stop:1 {colors.split(',')[1]}); }}"
+            "QProgressBar { background: %s; border: none; }"
+            "QProgressBar::chunk { background: %s; }" % (theme.active["surface_hover"], chunk)
         )
 
     def update_task(self, task: DownloadTask) -> None:

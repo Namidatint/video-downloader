@@ -120,6 +120,8 @@ def test_summarize():
     ("Permission denied: /x", "permission_denied"),
     ("DRM protected content", "drm"),
     ("ProxyError: Cannot connect to proxy", "proxy_error"),
+    ("Connection refused (127.0.0.1:7890)", "proxy_refused"),
+    ("urlopen error [Errno 61] Connection refused", "proxy_refused"),
     ("Read timed out.", "timeout"),
     ("Download cancelled by user", "cancelled"),
     ("something nobody has ever seen", "generic"),
@@ -166,6 +168,20 @@ def test_settings_roundtrip(isolated_settings):
     assert loaded.download_dir == s.download_dir
     assert loaded.proxy == s.proxy
     assert loaded.max_concurrent == 6
+
+
+def test_settings_proxy_mode_roundtrip(isolated_settings):
+    s = Settings(proxy_mode="direct", proxy="http://127.0.0.1:7890")
+    s.validate()
+    assert s.proxy_mode == "direct"
+    assert s.effective_proxy == ""
+    s.save()
+    loaded = Settings.load()
+    assert loaded.proxy_mode == "direct"
+
+    s.proxy_mode = "invalid"
+    s.validate()
+    assert s.proxy_mode == "system"
 
 
 def test_settings_defaults_are_sane():

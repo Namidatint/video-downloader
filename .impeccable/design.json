@@ -1,0 +1,367 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-25T10:53:11.523687+00:00",
+  "title": "Design System: GlowDL 拾光下载器",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "primary",
+        "displayName": "Paper Ink",
+        "canonical": "#F7F4ED",
+        "tonalRamp": [
+          "#211C12",
+          "#4B4026",
+          "#776438",
+          "#A58948",
+          "#C1A769",
+          "#D1C098",
+          "#E2D9C4",
+          "#F6F4EE"
+        ]
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "Warm Black",
+        "canonical": "#0B0A09",
+        "tonalRamp": [
+          "#1B1A18",
+          "#3D3834",
+          "#60574F",
+          "#82766A",
+          "#A1958A",
+          "#BCB4AD",
+          "#D7D3CF",
+          "#F3F2F1"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Panel Graphite",
+        "canonical": "#131110",
+        "tonalRamp": [
+          "#1B1918",
+          "#3C3734",
+          "#5E5550",
+          "#81736C",
+          "#9F928C",
+          "#BBB2AE",
+          "#D7D2D0",
+          "#F3F2F1"
+        ]
+      },
+      "surface-raised": {
+        "role": "neutral",
+        "displayName": "Raised Graphite",
+        "canonical": "#191614",
+        "tonalRamp": [
+          "#1C1917",
+          "#3E3733",
+          "#60564E",
+          "#847469",
+          "#A29389",
+          "#BDB3AC",
+          "#D8D2CF",
+          "#F3F2F1"
+        ]
+      },
+      "surface-hover": {
+        "role": "neutral",
+        "displayName": "Hover Graphite",
+        "canonical": "#221F1B",
+        "tonalRamp": [
+          "#1C1A17",
+          "#3E3933",
+          "#61594E",
+          "#847869",
+          "#A39788",
+          "#BDB6AC",
+          "#D8D4CF",
+          "#F3F2F1"
+        ]
+      },
+      "rail": {
+        "role": "neutral",
+        "displayName": "Rail Black",
+        "canonical": "#0D0C0B",
+        "tonalRamp": [
+          "#1B1A18",
+          "#3C3835",
+          "#5E5751",
+          "#80766C",
+          "#9F958C",
+          "#BAB4AE",
+          "#D7D3D0",
+          "#F3F2F1"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#2E2A25",
+        "tonalRamp": [
+          "#1C1A17",
+          "#3E3933",
+          "#60584F",
+          "#837869",
+          "#A29789",
+          "#BCB5AC",
+          "#D8D4CF",
+          "#F3F2F1"
+        ]
+      },
+      "rule-strong": {
+        "role": "neutral",
+        "displayName": "Strong Hairline",
+        "canonical": "#4B453C",
+        "tonalRamp": [
+          "#1C1A17",
+          "#3E3A33",
+          "#60594E",
+          "#847969",
+          "#A29889",
+          "#BDB6AC",
+          "#D8D4CF",
+          "#F3F2F1"
+        ]
+      },
+      "text-secondary": {
+        "role": "neutral",
+        "displayName": "Secondary Ink",
+        "canonical": "#D8D2C6",
+        "tonalRamp": [
+          "#1D1B16",
+          "#413B30",
+          "#675C48",
+          "#8D7E60",
+          "#AB9D80",
+          "#C2B9A6",
+          "#DBD6CC",
+          "#F4F3F0"
+        ]
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "#A9A29A",
+        "tonalRamp": [
+          "#1B1A18",
+          "#3C3935",
+          "#5E5851",
+          "#80776D",
+          "#9F968C",
+          "#BAB5AE",
+          "#D6D3D0",
+          "#F3F2F1"
+        ]
+      },
+      "text-dim": {
+        "role": "neutral",
+        "displayName": "Dim Ink",
+        "canonical": "#817A70",
+        "tonalRamp": [
+          "#1B1A18",
+          "#3C3935",
+          "#5D5852",
+          "#7F786E",
+          "#9D978D",
+          "#BAB5AF",
+          "#D6D4D1",
+          "#F3F2F2"
+        ]
+      },
+      "signal-success": {
+        "role": "success",
+        "displayName": "Done Green",
+        "canonical": "#4CD98C",
+        "tonalRamp": [
+          "#0D2618",
+          "#1A5736",
+          "#238C53",
+          "#28C56F",
+          "#4BE08E",
+          "#84E4B0",
+          "#BAEDD1",
+          "#ECF9F2"
+        ]
+      },
+      "signal-warn": {
+        "role": "warning",
+        "displayName": "Progress Amber",
+        "canonical": "#F2B24A",
+        "tonalRamp": [
+          "#2A1D09",
+          "#614210",
+          "#9E6811",
+          "#DF8F0E",
+          "#F9AD32",
+          "#F4C474",
+          "#F5DBB1",
+          "#FBF4E9"
+        ]
+      },
+      "signal-danger": {
+        "role": "danger",
+        "displayName": "Failure Red",
+        "canonical": "#FF6E60",
+        "tonalRamp": [
+          "#2C0A07",
+          "#67120A",
+          "#A81507",
+          "#ED1500",
+          "#FF3E2C",
+          "#FE776A",
+          "#FBB3AC",
+          "#FCEAE8"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "page-title": {
+        "displayName": "Page Title",
+        "purpose": "One per screen; carries hierarchy without a kicker."
+      },
+      "media-title": {
+        "displayName": "Media Title",
+        "purpose": "Parsed video title; single line, elided with tooltip."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All interface copy at 13px."
+      },
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Secondary facts: uploader, site, duration."
+      },
+      "mono": {
+        "displayName": "Measurement Mono",
+        "purpose": "Only measurements: timecode, size, speed, version, format id."
+      }
+    },
+    "shadows": [
+      {
+        "name": "none",
+        "value": "none",
+        "purpose": "This world has no elevation system; depth comes from ground/surface value and 1px rules."
+      }
+    ],
+    "motion": [
+      {
+        "name": "none",
+        "value": "none",
+        "purpose": "No entrance or opacity animation; state changes are instant to keep repaint cost minimal."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "minimum",
+        "value": "1080px"
+      },
+      {
+        "name": "default",
+        "value": "1240px"
+      }
+    ],
+    "theme": {
+      "dark": "default",
+      "light": "photo-paper variant; requires restart to redraw icons"
+    }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "One decisive action per region: parse, download, re-check.",
+      "html": "<button class=\"ds-btn-primary\">解析</button>",
+      "css": ".ds-btn-primary{background:#F7F4ED;color:#0B0A09;border:1px solid #F7F4ED;padding:8px 14px;font:600 13px/1.2 'PingFang SC','Microsoft YaHei UI',sans-serif;border-radius:0;cursor:pointer}.ds-btn-primary:hover{background:#FFFFFF;border-color:#FFFFFF}.ds-btn-primary:focus-visible{outline:1px solid #F7F4ED;outline-offset:2px}.ds-btn-primary:disabled{background:#191614;color:#817A70;border-color:#2E2A25;cursor:default}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary in-place actions: formats, browse, open folder.",
+      "html": "<button class=\"ds-btn-ghost\">全部格式</button>",
+      "css": ".ds-btn-ghost{background:transparent;color:#D8D2C6;border:1px solid #4B453C;padding:8px 14px;font:500 13px/1.2 'PingFang SC','Microsoft YaHei UI',sans-serif;border-radius:0;cursor:pointer}.ds-btn-ghost:hover{background:#221F1B;color:#F7F4ED}.ds-btn-ghost:focus-visible{outline:1px solid #F7F4ED;outline-offset:2px}"
+    },
+    {
+      "name": "Navigation Item",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "Five square destinations in the left rail; selected is ink-on-paper.",
+      "html": "<nav class=\"ds-rail\"><a class=\"ds-nav ds-nav-active\" href=\"#\">下载</a><a class=\"ds-nav\" href=\"#\">队列</a><a class=\"ds-nav\" href=\"#\">历史</a></nav>",
+      "css": ".ds-rail{display:flex;flex-direction:column;gap:2px;width:210px;background:#0D0C0B;padding:12px;border-right:1px solid #2E2A25;font-family:'PingFang SC','Microsoft YaHei UI',sans-serif}.ds-nav{display:block;padding:9px 12px;color:#A9A29A;text-decoration:none;font-size:13.5px;border:1px solid transparent;border-radius:0}.ds-nav:hover{background:#221F1B;color:#F7F4ED}.ds-nav-active{background:#F7F4ED;color:#0B0A09;border-color:#F7F4ED;font-weight:600}"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Link field and settings fields; square, hairline border, ink focus.",
+      "html": "<input class=\"ds-input\" placeholder=\"粘贴视频链接\">",
+      "css": ".ds-input{background:#191614;color:#F7F4ED;border:1px solid #4B453C;padding:11px 12px;font:400 14px/1.3 'PingFang SC','Microsoft YaHei UI',sans-serif;border-radius:0;width:100%;box-sizing:border-box}.ds-input::placeholder{color:#817A70}.ds-input:focus{outline:none;border-color:#F7F4ED;background:#080706}"
+    },
+    {
+      "name": "Panel Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The working surface: flat graphite with a 1px rule; never nested.",
+      "html": "<section class=\"ds-card\"><h3>4K 修复｜把喜欢的视频一键收藏到本地</h3><p>哔哩哔哩 · 12:34 · 128.4 万次播放</p></section>",
+      "css": ".ds-card{background:#131110;border:1px solid #2E2A25;border-radius:0;padding:18px;font-family:'PingFang SC','Microsoft YaHei UI',sans-serif;color:#F7F4ED}.ds-card h3{margin:0 0 6px;font-size:17px;font-weight:600}.ds-card p{margin:0;color:#A9A29A;font:400 12px/1.4 'PingFang SC','Microsoft YaHei UI',sans-serif}"
+    },
+    {
+      "name": "State Tag",
+      "kind": "chip",
+      "refersTo": "tag",
+      "description": "Outlined square tag; state colour lives in the border and text only.",
+      "html": "<span class=\"ds-tag ds-tag-ok\">已完成</span> <span class=\"ds-tag ds-tag-err\">失败</span> <span class=\"ds-tag ds-tag-warn\">下载中</span>",
+      "css": ".ds-tag{display:inline-block;padding:1px 7px;border:1px solid #4B453C;border-radius:0;font:600 11px/1.5 'PingFang SC','Microsoft YaHei UI',sans-serif;color:#A9A29A}.ds-tag-ok{color:#4CD98C;border-color:#4CD98C}.ds-tag-err{color:#FF6E60;border-color:#FF6E60}.ds-tag-warn{color:#F2B24A;border-color:#F2B24A}"
+    },
+    {
+      "name": "Progress Rail",
+      "kind": "custom",
+      "refersTo": "progress",
+      "description": "Six-pixel flat rail; no gradient, no animation, colour = state.",
+      "html": "<div class=\"ds-progress\"><div class=\"ds-progress-fill\" style=\"width:43.6%\"></div></div><div class=\"ds-progress-caption\">43.6% · 122.1 MB / 279.4 MB · 5.9 MB/s · 剩余 0:26</div>",
+      "css": ".ds-progress{height:6px;background:#221F1B;border-radius:0;overflow:hidden}.ds-progress-fill{height:100%;background:#F7F4ED;border-radius:0}.ds-progress-caption{margin-top:6px;color:#A9A29A;font:400 12px/1.4 monospace}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Reverse Contact Sheet",
+    "overview": "GlowDL 把下载任务当成一卷待归档的素材：暖黑的工作台、纸白的墨、1px 的刻度线、等宽的读数。界面像一张反面接触印相——暗底、白格、琥珀色的登记方块——而不是一张 SaaS 仪表盘。它借来视频素材管理的字体、配色、密度和一个标志性动作（时间码/清单读数），导航与控件仍保持桌面工具最熟悉的样子。",
+    "keyCharacteristics": [
+      "Zero radius on every surface, control and marker.",
+      "Flat fills only: no gradient, shadow, blur or opacity animation.",
+      "Paper-white is the only emphasis colour; green/amber/red are reserved for state.",
+      "Hairline 1px rules and measured spacing carry hierarchy instead of elevation.",
+      "Monospace is used only where a number is a measurement."
+    ],
+    "rules": [
+      {
+        "name": "The No-Elevation Rule",
+        "body": "Never introduce a shadow, blur or glow. Separate layers with ground/surface value and 1px rules.",
+        "section": "elevation"
+      },
+      {
+        "name": "The State-Colour Rule",
+        "body": "Green, amber and red may only encode done/progress/failure. Emphasis is paper white, never a second hue.",
+        "section": "colors"
+      },
+      {
+        "name": "The Measurement Rule",
+        "body": "Monospace is reserved for timecode, byte counts, speed, percentages, versions and format ids. Prose never uses it.",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "Keep every panel and control square.",
+      "Use tabular figures and ' · ' separators for running measurements.",
+      "Elide long titles on one line and expose the full text in a tooltip.",
+      "Keep the primary action paper-white and visible at 1080×700."
+    ],
+    "donts": [
+      "Don't add rounded corners, gradients, shadows or glass.",
+      "Don't use colour decoratively or as the only state signal.",
+      "Don't nest cards or build the page from same-size icon/title/subtitle cards.",
+      "Don't put a kicker above a heading, or use emoji as icons."
+    ]
+  }
+}

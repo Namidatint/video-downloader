@@ -12,7 +12,7 @@ from app.core import cookies as cookies_mod
 from app.core import engine, formats as fmt, paths
 from app.core.settings import Settings
 from app.ui import widgets
-from app.ui.theme import DARK
+from app.ui import theme
 
 
 def _section(title: str, hint: str = "") -> tuple[QFrame, QVBoxLayout]:
@@ -163,15 +163,28 @@ class SettingsPage(QWidget):
     def _build_network_section(self) -> QFrame:
         card, layout = _section(
             "网络与速度",
-            "访问 YouTube 等境外站点通常需要代理；访问 B 站/抖音一般不需要。留空表示直连。",
+            "「跟随系统」沿用 macOS/Windows 的系统代理；代理软件关掉后若报连接失败，"
+            "改成「直连」即可（国内站点通常不需要代理）。",
         )
         form = QFormLayout()
         form.setVerticalSpacing(10)
 
+        self.proxy_mode_combo = QComboBox()
+        self.proxy_mode_combo.addItem("跟随系统（推荐）", "system")
+        self.proxy_mode_combo.addItem("直连（不使用代理）", "direct")
+        self.proxy_mode_combo.addItem("自定义代理", "custom")
+        self.proxy_mode_combo.currentIndexChanged.connect(self._on_proxy_mode_changed)
+        form.addRow("网络模式", self.proxy_mode_combo)
+
         self.proxy_edit = QLineEdit()
         self.proxy_edit.setPlaceholderText("http://127.0.0.1:7890  或  socks5://127.0.0.1:1080")
         self.proxy_edit.editingFinished.connect(self._on_proxy_edited)
-        form.addRow("代理", self.proxy_edit)
+        form.addRow("代理地址", self.proxy_edit)
+
+        self.proxy_hint = QLabel("")
+        self.proxy_hint.setObjectName("Dim")
+        self.proxy_hint.setWordWrap(True)
+        form.addRow("", self.proxy_hint)
 
         self.rate_spin = QSpinBox()
         self.rate_spin.setRange(0, 1024 * 200)
@@ -257,6 +270,9 @@ class SettingsPage(QWidget):
         self.theme_combo.addItem("浅色", "light")
         self.theme_combo.currentIndexChanged.connect(self._on_theme_changed)
         form.addRow("主题", self.theme_combo)
+        theme_hint = QLabel("默认深色。切换主题会在重启应用后生效。")
+        theme_hint.setObjectName("Dim")
+        form.addRow("", theme_hint)
 
         self.lang_combo = QComboBox()
         self.lang_combo.addItem("跟随系统", "auto")
@@ -334,6 +350,8 @@ class SettingsPage(QWidget):
         self.mp4_check.setChecked(s.prefer_mp4)
         self.concurrent_spin.setValue(s.max_concurrent)
         self.proxy_edit.setText(s.proxy)
+        _select_data(self.proxy_mode_combo, getattr(s, "proxy_mode", "system"))
+        self._sync_proxy_mode_ui()
         self.rate_spin.setValue(s.rate_limit_kbps)
         self.retries_spin.setValue(s.retries)
         self.fragments_spin.setValue(s.fragment_concurrency)
@@ -373,6 +391,7 @@ class SettingsPage(QWidget):
         s.custom_format = self.custom_format_edit.text().strip()
         s.prefer_mp4 = self.mp4_check.isChecked()
         s.max_concurrent = self.concurrent_spin.value()
+        s.proxy_mode = self.proxy_mode_combo.currentData() or "system"
         s.proxy = self.proxy_edit.text().strip()
         s.rate_limit_kbps = self.rate_spin.value()
         s.retries = self.retries_spin.value()
@@ -421,6 +440,20 @@ class SettingsPage(QWidget):
     def _on_proxy_edited(self) -> None:
         self._commit()
 
+    def _on_proxy_mode_changed(self, _index: int) -> None:
+        self._sync_proxy_mode_ui()
+        self._commit()
+
+    def _sync_proxy_mode_ui(self) -> None:
+        mode = self.proxy_mode_combo.currentData() or "system"
+        self.proxy_edit.setEnabled(mode == "custom")
+        if mode == "direct":
+            self.proxy_hint.setText("所有请求直连，不读取系统代理。下载 B 站/抖音时推荐。")
+        elif mode == "custom":
+            self.proxy_hint.setText("只使用下面填写的地址；支持 http:// 与 socks5://。")
+        else:
+            self.proxy_hint.setText("自动读取系统代理；代理软件关闭后可能报连接失败，此时请改直连。")
+
     def _on_cookie_file_edited(self) -> None:
         self._commit()
         if self.settings.cookies_file:
@@ -445,7 +478,7 @@ class SettingsPage(QWidget):
         ok, message = cookies_mod.validate_cookiefile(self.cookie_file_edit.text().strip())
         self.cookie_status.setText(message)
         self.cookie_status.setStyleSheet(
-            f"color: {DARK['success'] if ok else DARK['danger']};")
+            f"color: {theme.active['success'] if ok else theme.active['danger']};")
 
 
 def _select_data(combo: QComboBox, value: str) -> None:
