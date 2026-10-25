@@ -72,6 +72,18 @@ def _ffmpeg_check(settings: Settings) -> CheckResult:
                        fix=Fix(ACTION_FFMPEG, "自动修复 ffmpeg", "Fix ffmpeg"))
 
 
+def _postprocess_check() -> CheckResult:
+    try:
+        import mutagen
+
+        version = getattr(mutagen, "version_string", "")
+        return CheckResult("postprocess", "封面 / 元数据嵌入", PASS,
+                           f"mutagen {version} 可用（无需 ffprobe）")
+    except Exception:
+        return CheckResult("postprocess", "封面 / 元数据嵌入", WARN,
+                           "缺少 mutagen，MP4 封面嵌入会回退到 ffprobe（内置包未附带）")
+
+
 def _output_dir_check(settings: Settings) -> CheckResult:
     try:
         folder = settings.output_dir
@@ -212,6 +224,7 @@ def run_all(settings: Settings) -> list[CheckResult]:
         lambda: _platform_check(),
         lambda: _ytdlp_check(settings),
         lambda: _ffmpeg_check(settings),
+        lambda: _postprocess_check(),
         lambda: _output_dir_check(settings),
         lambda: _disk_check(settings),
         lambda: _proxy_check(settings),

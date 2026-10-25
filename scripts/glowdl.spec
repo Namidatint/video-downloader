@@ -16,6 +16,7 @@ datas = collect_data_files("imageio_ffmpeg")
 datas += [(os.path.join(ROOT, "app", "resources"), "app/resources")]
 
 hiddenimports = collect_submodules("yt_dlp")
+hiddenimports += ["mutagen", "Cryptodome"]
 
 a = Analysis(
     [os.path.join(ROOT, "app", "main.py")],

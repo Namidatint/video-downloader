@@ -78,7 +78,8 @@ macOS `.app` 已在本机启动验证：解析本地 HTTP 视频 → 入队下�
 - 统一使用系统原生窗口、HiDPI、深浅两套主题（切换后重启生效）、系统托盘通知。
 
 **稳定性**
-- 内置 **ffmpeg**（`imageio-ffmpeg` wheel），不再出现「找不到 ffmpeg / 无法合并音视频」。
+- 内置 **ffmpeg**（`imageio-ffmpeg` wheel）+ **mutagen**，不再出现「找不到 ffmpeg / 无法合并音视频 /
+  封面嵌入失败」；自检会检查后处理依赖。
 - **浏览器 Cookie 直读**（Chrome / Edge / Firefox / Safari / Brave / Chromium / Opera / Vivaldi）+
   `cookies.txt` / Cookie-Editor JSON 导入与格式转换。
 - 网络：**网络模式（跟随系统 / 直连 / 自定义代理）**、限速、重试、分片并发、
