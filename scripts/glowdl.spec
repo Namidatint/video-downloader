@@ -4,7 +4,7 @@
 import os
 import sys
 
-from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+from PyInstaller.utils.hooks import collect_all, collect_data_files, collect_submodules
 
 ROOT = os.path.abspath(os.path.join(SPECPATH, os.pardir))
 IS_WIN = sys.platform.startswith("win")
@@ -12,17 +12,22 @@ IS_MAC = sys.platform == "darwin"
 EXE_ICON = os.path.join(ROOT, "app", "resources", "icon.ico") if IS_WIN else None
 ICNS = os.path.join(ROOT, "app", "resources", "icon.icns")
 
+binaries = []
 datas = collect_data_files("imageio_ffmpeg")
 datas += collect_data_files("certifi")
 datas += [(os.path.join(ROOT, "app", "resources"), "app/resources")]
 
 hiddenimports = collect_submodules("yt_dlp")
 hiddenimports += ["certifi", "mutagen", "Cryptodome", "websocket", "piexif"]
+_heif_datas, _heif_binaries, _heif_hidden = collect_all("pillow_heif")
+datas += _heif_datas
+binaries += _heif_binaries
+hiddenimports += _heif_hidden
 
 a = Analysis(
     [os.path.join(ROOT, "app", "main.py")],
     pathex=[ROOT],
-    binaries=[],
+    binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[],
@@ -71,8 +76,8 @@ if IS_MAC:
         info_plist={
             "CFBundleDisplayName": "视频下载器",
             "CFBundleName": "视频下载器",
-            "CFBundleShortVersionString": "1.0.3",
-            "CFBundleVersion": "1.0.3",
+            "CFBundleShortVersionString": "1.0.4",
+            "CFBundleVersion": "1.0.4",
             "NSHighResolutionCapable": True,
             "LSMinimumSystemVersion": "11.0",
             "NSHumanReadableCopyright": "by NamidaTint · 仅用于下载你有权保存的内容",

@@ -14,8 +14,8 @@ Windows / macOS 桌面视频下载器。界面参考 Windows 10「设置」，�
 
 | 平台 | 文件 | 说明 |
 |---|---|---|
-| Windows | [VideoDownloader-1.0.3-Windows-x64.zip](https://github.com/Namidatint/video-downloader/releases/download/v1.0.3/VideoDownloader-1.0.3-Windows-x64.zip) | 解压后运行 `视频下载器.exe`，免安装 |
-| macOS | [VideoDownloader-1.0.3-macOS.dmg](https://github.com/Namidatint/video-downloader/releases/download/v1.0.3/VideoDownloader-1.0.3-macOS.dmg) | 打开后拖入「应用程序」 |
+| Windows | [VideoDownloader-1.0.4-Windows-x64.zip](https://github.com/Namidatint/video-downloader/releases/download/v1.0.4/VideoDownloader-1.0.4-Windows-x64.zip) | 解压后运行 `视频下载器.exe`，免安装 |
+| macOS | [VideoDownloader-1.0.4-macOS.dmg](https://github.com/Namidatint/video-downloader/releases/download/v1.0.4/VideoDownloader-1.0.4-macOS.dmg) | 打开后拖入「应用程序」 |
 
 Windows 首次运行若提示 SmartScreen：更多信息 → 仍要运行。应用未做商业代码签名。
 
@@ -23,7 +23,7 @@ Windows 首次运行若提示 SmartScreen：更多信息 → 仍要运行。应�
 
 - 基于 yt-dlp：支持 B 站、YouTube、抖音、小红书等站点，画质预设与「全部格式」选择。
 - 抖音原生解析：直接粘贴整段分享口令，自动提取链接；本机 Edge/Chrome 无头解析，读取无水印播放源，不经过第三方接口。
-- 抖音实况照片：导出真正的实况包——iPhone 用 JPG+MOV 配对，Android 用单张 Motion Photo JPEG。
+- 抖音实况照片：导出手机可导入的实况包——iPhone 用单文件 `.livp`，Android 用单张 Motion Photo JPEG。
 - 并发队列 50–200（默认 50），实时进度、暂停、重试、断点续传。
 - 内置 ffmpeg 与封面/元数据写入；自动读取浏览器 Cookie 或导入 cookies.txt。
 - 网络模式：跟随系统 / 直连 / 自定义代理；限速、重试、分片并发。
@@ -38,8 +38,9 @@ Windows 首次运行若提示 SmartScreen：更多信息 → 仍要运行。应�
 3. 选择画质（或「全部格式」），点「开始下载」。
 4. 抖音图文作品会显示「图文 · N 张」，ZIP 内是原始图片。
 5. 实况照片显示「实况 · N 张 + 动态」，ZIP 内含：
-   - `iPhone/`：同标识的 JPG + MOV，一起导入「照片」即合并为实况；
-   - `Android/`：`MV_*.jpg` 单文件，Google 相册 / 三星相册识别为动态照片。
+   - `LivePhoto.livp`：iPhone 优先用这个单文件，AirDrop 后用「文件」打开并存储到照片；
+   - `iPhone/`：JPG / HEIC + MOV 备用，可一起导入「照片」；
+   - `Android/MV_*.jpg`：单文件动态照片，Google 相册 / 三星相册识别。
 
 ## 常见问题
 
@@ -48,7 +49,7 @@ Windows 首次运行若提示 SmartScreen：更多信息 → 仍要运行。应�
 | 网页能打开、软件连接被拒 | 设置 → 网络模式改为「直连」；代理软件关闭后尤其常见 |
 | 证书校验失败 | 应用已内置根证书；诊断页运行「重新自检」 |
 | 抖音提示安装浏览器 | 需要本机安装 Microsoft Edge 或 Google Chrome |
-| 抖音分享文字无法解析 | 1.0.3 已支持整段口令；仍失败请更新到最新版 |
+| 抖音分享文字无法解析 | 1.0.4 已支持整段口令；仍失败请更新到最新版 |
 | 下载的 B 站视频有 UP 主水印 | 水印由 UP 主上传时烧录，下载器不会添加，也无法无损去除；可换源或裁剪 |
 | macOS 提示无法验证开发者 | 右键应用 → 打开；或系统设置 → 隐私与安全性 → 仍要打开 |
 
@@ -66,11 +67,11 @@ python -m PyInstaller --noconfirm --clean scripts/glowdl.spec
 # macOS
 codesign --deep --force --sign - "dist/视频下载器.app"
 hdiutil create -volname 视频下载器 -srcfolder "dist/视频下载器.app" \
-  -ov -format UDZO "dist/视频下载器-1.0.3-macOS.dmg"
+  -ov -format UDZO "dist/视频下载器-1.0.4-macOS.dmg"
 
 # Windows（PowerShell）
 Compress-Archive -Path "dist\视频下载器\*" `
-  -DestinationPath "dist\视频下载器-1.0.3-Windows-x64.zip"
+  -DestinationPath "dist\视频下载器-1.0.4-Windows-x64.zip"
 ```
 
 GitHub Actions 会在 Windows / macOS 上自动构建，见 `.github/workflows/build.yml`。
