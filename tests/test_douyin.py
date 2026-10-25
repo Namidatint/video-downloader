@@ -83,3 +83,51 @@ def test_douyin_error_translation():
     problem = errors.translate("ERROR: [Douyin] 123: Fresh cookies (not necessarily logged in) are needed")
     assert problem.code == "douyin_cookie"
     assert problem.fixes
+
+
+def test_extract_url_from_share_text():
+    text = ("5.38 复制打开抖音，看看【张小莲的图文作品】感觉至上# 神级live现场 # 张艺兴  "
+            "https://v.douyin.com/4FMez9M7KPI/ :6pm 11/29 UyG:/ y@g.oD")
+    assert douyin.extract_url(text) == "https://v.douyin.com/4FMez9M7KPI/"
+    assert douyin.extract_url("https://www.douyin.com/video/1，") == "https://www.douyin.com/video/1"
+    assert douyin.extract_url("没有链接") == ""
+
+
+def test_parse_note_gallery():
+    info = douyin.parse_note(
+        {"title": "感觉至上#神级live现场 - 抖音",
+         "images": ["https://example.com/a.webp", "https://example.com/b.webp"]},
+        "https://www.douyin.com/note/7686466217775889275",
+    )
+    assert info.is_images
+    assert info.video_id == "7686466217775889275"
+    assert info.title == "感觉至上#神级live现场"
+    assert len(info.images) == 2
+    payload = douyin.to_info_dict(info)
+    assert payload["_type"] == "images"
+    assert payload["image_count"] == 2
+    assert payload["formats"][0]["ext"] == "zip"
+    assert douyin.render_filename("%(title)s.%(ext)s", info, ext="zip").endswith(".zip")
+
+
+def test_parse_detail_rejects_image_only_post():
+    payload = {"aweme_detail": {"aweme_id": "1", "desc": "图文",
+                                "images": [{"url_list": ["https://example.com/a.webp"]}]}}
+    try:
+        douyin.parse_detail(payload)
+    except douyin.DouyinError as exc:
+        assert "图文作品" in str(exc)
+    else:
+        raise AssertionError("image-only detail should not produce a video")
+
+
+def test_resolve_share_text_extracts_url(monkeypatch):
+    douyin._CACHE.clear()
+    monkeypatch.setattr(douyin, "find_browser", lambda: ("/bin/true", "edge"))
+    monkeypatch.setattr(douyin, "_expand_url",
+                        lambda url: "https://www.douyin.com/video/7675374449897524534")
+    monkeypatch.setattr(douyin, "_cdp_resolve", lambda url, timeout=25: DETAIL)
+    text = "复制打开抖音 https://v.douyin.com/4FMez9M7KPI/ 看看"
+    info = douyin.resolve(text)
+    assert info.video_id == "7675374449897524534"
+    assert info.title.startswith("测试抖音视频")

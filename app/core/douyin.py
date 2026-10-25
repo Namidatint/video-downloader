@@ -16,7 +16,10 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
+import signal
+import ssl
 import subprocess
 import tempfile
 import time
@@ -34,6 +37,15 @@ USER_AGENT = (
     "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 )
 REFERER = "https://www.douyin.com/"
+
+
+def _ssl_context():
+    try:
+        import certifi
+
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        return None
 
 
 class DouyinError(Exception):
@@ -64,14 +76,71 @@ class DouyinInfo:
     height: int | None
     variants: list[DouyinVariant]
     webpage_url: str
+    images: list[str] = field(default_factory=list)
 
     @property
     def best(self) -> DouyinVariant:
         return max(self.variants, key=lambda v: v.bitrate)
 
+    @property
+    def is_images(self) -> bool:
+        return not self.variants and bool(self.images)
+
 
 _CACHE: dict[str, tuple[float, DouyinInfo]] = {}
 _CACHE_TTL = 600
+
+_URL_RE = re.compile(r"https?://[^\s<>\"'，。；、）】》」』]+", re.IGNORECASE)
+_BARE_RE = re.compile(r"(?:https?://)?(?:v\.)?douyin\.com/[^\s<>\"'，。；、）】》」』]+",
+                      re.IGNORECASE)
+
+
+def extract_url(text: str) -> str:
+    """Pull the first Douyin URL out of a share message.
+
+    Douyin's share sheet pastes text like ``5.38 复制打开抖音... https://v.douyin.com/xxx/``;
+    the previous input validation treated the whole sentence as a URL and failed.
+    """
+    text = (text or "").strip()
+    if not text:
+        return ""
+    match = _URL_RE.search(text)
+    if not match:
+        match = _BARE_RE.search(text)
+        if not match:
+            return ""
+        candidate = match.group(0)
+        if not candidate.lower().startswith(("http://", "https://")):
+            candidate = "https://" + candidate
+    else:
+        candidate = match.group(0)
+    return candidate.rstrip(".,!?;:，。！？；：、）】》」』\"'")
+
+
+def _expand_url(url: str, timeout: float = 8.0) -> str:
+    """Follow a v.douyin.com short link to its canonical /video/ or /note/ URL."""
+    host = (urlparse(url).hostname or "").lower()
+    if host != "v.douyin.com":
+        return url
+    request = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": USER_AGENT,
+            "Referer": REFERER,
+            "Accept": "text/html,application/xhtml+xml",
+        },
+    )
+    context = _ssl_context()
+    try:
+        with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+            return response.geturl() or url
+    except Exception:
+        return url
+
+
+def _canonical_id(url: str) -> str:
+    match = re.search(r"/(?:video|note)/(\d+)", url)
+    return match.group(1) if match else url
 
 
 # ---------------------------------------------------------------------------
@@ -135,7 +204,35 @@ def _recv_json(ws, timeout: float = 1.0) -> dict | None:
         return None
 
 
-def _cdp_resolve(url: str, timeout: float = 45.0) -> dict[str, Any]:
+def _kill_browser(proc: subprocess.Popen, profile: str) -> None:
+    """Kill the whole browser process group, not just the launcher."""
+    if proc.poll() is None:
+        try:
+            if os.name == "nt":
+                subprocess.run(["taskkill", "/PID", str(proc.pid), "/T", "/F"],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                               timeout=8)
+            else:
+                os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+        except Exception:
+            try:
+                proc.terminate()
+            except Exception:
+                pass
+        try:
+            proc.wait(timeout=5)
+        except Exception:
+            try:
+                if os.name != "nt":
+                    os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+                else:
+                    proc.kill()
+            except Exception:
+                pass
+    shutil.rmtree(profile, ignore_errors=True)
+
+
+def _cdp_resolve(url: str, timeout: float = 25.0) -> dict[str, Any]:
     """Launch a headless browser and return the signed aweme/detail JSON."""
     from websocket import create_connection  # websocket-client
 
@@ -155,15 +252,29 @@ def _cdp_resolve(url: str, timeout: float = 45.0) -> dict[str, Any]:
         "--no-default-browser-check",
         "--disable-gpu",
         "--mute-audio",
+        "--disable-background-networking",
+        "--disable-component-update",
+        "--disable-sync",
+        "--disable-extensions",
+        "--disable-default-apps",
+        "--disable-features=Translate,MediaRouter,OptimizationHints",
+        "--metrics-recording-only",
+        "--no-pings",
         "--disable-blink-features=AutomationControlled",
         "--window-size=1280,800",
         "about:blank",
     ]
-    proc = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    kwargs: dict[str, Any] = {}
+    if os.name == "nt":
+        kwargs["creationflags"] = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    else:
+        kwargs["start_new_session"] = True
+    proc = subprocess.Popen(args, stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL, **kwargs)
     ws = None
     try:
         port_file = Path(profile) / "DevToolsActivePort"
-        deadline = time.time() + 20
+        deadline = time.time() + 15
         port = ""
         while time.time() < deadline:
             if port_file.is_file():
@@ -173,12 +284,12 @@ def _cdp_resolve(url: str, timeout: float = 45.0) -> dict[str, Any]:
                     port = ""
                 if port:
                     break
-            time.sleep(0.2)
+            time.sleep(0.15)
         if not port:
             raise DouyinError("抖音解析浏览器启动失败，请检查 Edge/Chrome 是否可正常打开。")
 
         page = None
-        deadline = time.time() + 10
+        deadline = time.time() + 8
         while time.time() < deadline:
             try:
                 with urllib.request.urlopen(f"http://127.0.0.1:{port}/json", timeout=2) as resp:
@@ -188,13 +299,16 @@ def _cdp_resolve(url: str, timeout: float = 45.0) -> dict[str, Any]:
                     break
             except Exception:
                 pass
-            time.sleep(0.2)
+            time.sleep(0.15)
         if not page:
             raise DouyinError("抖音解析浏览器没有响应，请重试。")
 
-        ws = create_connection(page["webSocketDebuggerUrl"], timeout=10)
+        ws = create_connection(page["webSocketDebuggerUrl"], timeout=10,
+                               max_size=16 * 1024 * 1024)
         message_id = 0
         pending: dict[int, str] = {}
+        detail_request: str | None = None
+        body_error: str | None = None
 
         def send(method: str, params: dict | None = None) -> int:
             nonlocal message_id
@@ -209,7 +323,7 @@ def _cdp_resolve(url: str, timeout: float = 45.0) -> dict[str, Any]:
         detail: dict[str, Any] | None = None
         deadline = time.time() + timeout
         while time.time() < deadline:
-            msg = _recv_json(ws)
+            msg = _recv_json(ws, 1.0)
             if not msg:
                 continue
             method = msg.get("method")
@@ -218,13 +332,16 @@ def _cdp_resolve(url: str, timeout: float = 45.0) -> dict[str, Any]:
                 response = params.get("response") or {}
                 request_uri = response.get("url") or ""
                 if "/aweme/v1/web/aweme/detail/" in request_uri and response.get("status") == 200:
-                    req_id = params.get("requestId")
-                    if req_id:
-                        pending[send("Network.getResponseBody", {"requestId": req_id})] = req_id
+                    detail_request = params.get("requestId")
+            elif method == "Network.loadingFinished":
+                if detail_request and params.get("requestId") == detail_request:
+                    pending[send("Network.getResponseBody", {"requestId": detail_request})] = detail_request
+            elif method == "Network.loadingFailed":
+                if detail_request and params.get("requestId") == detail_request:
+                    body_error = str(params.get("errorText") or "network error")
             elif "id" in msg and msg["id"] in pending and isinstance(msg.get("result"), dict):
-                result = msg["result"]
-                body = result.get("body") or ""
-                if result.get("base64Encoded"):
+                body = msg["result"].get("body") or ""
+                if msg["result"].get("base64Encoded"):
                     import base64
 
                     try:
@@ -239,7 +356,11 @@ def _cdp_resolve(url: str, timeout: float = 45.0) -> dict[str, Any]:
                     if candidate and candidate.get("aweme_detail"):
                         detail = candidate
                         break
+                if not body:
+                    body_error = "empty response"
         if not detail:
+            if body_error:
+                raise DouyinError(f"抖音页面数据读取失败（{body_error}），请重试。")
             raise DouyinError(
                 "抖音页面没有返回视频数据。请先在浏览器打开该链接确认能播放，或稍后重试。"
             )
@@ -250,15 +371,7 @@ def _cdp_resolve(url: str, timeout: float = 45.0) -> dict[str, Any]:
                 ws.close()
             except Exception:
                 pass
-        try:
-            proc.terminate()
-            proc.wait(timeout=5)
-        except Exception:
-            try:
-                proc.kill()
-            except Exception:
-                pass
-        shutil.rmtree(profile, ignore_errors=True)
+        _kill_browser(proc, profile)
 
 
 # ---------------------------------------------------------------------------
@@ -334,6 +447,9 @@ def parse_detail(payload: dict[str, Any], webpage_url: str = "") -> DouyinInfo:
             variants.append(DouyinVariant(gear="default", height=height, width=width,
                                          bitrate=1, urls=urls))
     if not variants:
+        images = aweme.get("images") or []
+        if images:
+            raise DouyinError(f"这是抖音图文作品（{len(images)} 张图片），当前版本只支持视频下载。")
         raise DouyinError("抖音没有返回可下载的视频地址，可能视频受地区/登录限制。")
 
     # Keep only the highest-bitrate entry per height, best first.
@@ -357,27 +473,171 @@ def parse_detail(payload: dict[str, Any], webpage_url: str = "") -> DouyinInfo:
     )
 
 
-def resolve(url: str, timeout: float = 60.0, attempts: int = 3) -> DouyinInfo:
-    cached = _CACHE.get(url)
+def _cdp_note(url: str, timeout: float = 25.0) -> dict[str, Any]:
+    """Open a Douyin note page and read its rendered image URLs."""
+    from websocket import create_connection
+
+    browser = find_browser()
+    if not browser:
+        raise DouyinError(
+            "解析抖音需要一个本机浏览器：请安装 Microsoft Edge 或 Google Chrome 后重试。"
+        )
+    exe, _kind = browser
+    profile = tempfile.mkdtemp(prefix="glowdl-douyin-")
+    args = [
+        exe, "--headless=new", "--remote-debugging-port=0",
+        f"--user-data-dir={profile}", "--no-first-run", "--no-default-browser-check",
+        "--disable-gpu", "--mute-audio", "--disable-background-networking",
+        "--disable-component-update", "--disable-sync", "--disable-extensions",
+        "--disable-default-apps", "--disable-features=Translate,MediaRouter",
+        "--metrics-recording-only", "--no-pings",
+        "--disable-blink-features=AutomationControlled", "--window-size=1280,800",
+        "about:blank",
+    ]
+    kwargs: dict[str, Any] = {}
+    if os.name == "nt":
+        kwargs["creationflags"] = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    else:
+        kwargs["start_new_session"] = True
+    proc = subprocess.Popen(args, stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL, **kwargs)
+    ws = None
+    try:
+        port_file = Path(profile) / "DevToolsActivePort"
+        deadline = time.time() + 15
+        port = ""
+        while time.time() < deadline:
+            if port_file.is_file():
+                try:
+                    port = port_file.read_text().splitlines()[0].strip()
+                except OSError:
+                    port = ""
+                if port:
+                    break
+            time.sleep(0.15)
+        if not port:
+            raise DouyinError("抖音解析浏览器启动失败，请检查 Edge/Chrome 是否可正常打开。")
+
+        page = None
+        deadline = time.time() + 8
+        while time.time() < deadline:
+            try:
+                with urllib.request.urlopen(f"http://127.0.0.1:{port}/json", timeout=2) as resp:
+                    targets = json.loads(resp.read().decode("utf-8"))
+                page = next((t for t in targets if t.get("type") == "page"), None)
+                if page:
+                    break
+            except Exception:
+                pass
+            time.sleep(0.15)
+        if not page:
+            raise DouyinError("抖音解析浏览器没有响应，请重试。")
+
+        ws = create_connection(page["webSocketDebuggerUrl"], timeout=10,
+                               max_size=16 * 1024 * 1024)
+        message_id = 0
+
+        def send(method: str, params: dict | None = None) -> int:
+            nonlocal message_id
+            message_id += 1
+            ws.send(json.dumps({"id": message_id, "method": method, "params": params or {}}))
+            return message_id
+
+        send("Page.enable")
+        send("Runtime.enable")
+        send("Page.navigate", {"url": url})
+        expression = """(() => {
+          const urls = Array.from(new Set(Array.from(document.images)
+            .map(img => img.src)
+            .filter(src => src.includes('biz_tag=aweme_images'))));
+          return JSON.stringify({title: document.title || '', images: urls});
+        })()"""
+
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            request_id = send("Runtime.evaluate",
+                              {"expression": expression, "returnByValue": True})
+            while time.time() < deadline:
+                msg = _recv_json(ws, 1.0)
+                if not msg:
+                    break
+                if msg.get("id") == request_id and isinstance(msg.get("result"), dict):
+                    value = (msg["result"].get("result") or {}).get("value")
+                    if value:
+                        try:
+                            payload = json.loads(value)
+                        except ValueError:
+                            payload = {}
+                        if payload.get("images"):
+                            return payload
+                    break
+            time.sleep(0.5)
+        raise DouyinError("抖音图文页面没有返回图片，请稍后重试。")
+    finally:
+        if ws is not None:
+            try:
+                ws.close()
+            except Exception:
+                pass
+        _kill_browser(proc, profile)
+
+
+def parse_note(payload: dict[str, Any], webpage_url: str = "") -> DouyinInfo:
+    """Build a gallery result from the note page's rendered DOM."""
+    images = [str(u) for u in (payload.get("images") or []) if str(u).startswith("http")]
+    if not images:
+        raise DouyinError("抖音图文页面没有返回图片，请稍后重试。")
+    title = str(payload.get("title") or "").strip()
+    if title.endswith(" - 抖音"):
+        title = title.removesuffix(" - 抖音").strip()
+    match = re.search(r"/(?:note|video)/(\d+)", webpage_url)
+    video_id = match.group(1) if match else str(payload.get("id") or "")
+    return DouyinInfo(
+        video_id=video_id,
+        title=title or "抖音图文",
+        uploader=str(payload.get("uploader") or "抖音"),
+        duration=None,
+        thumbnail=images[0],
+        width=None,
+        height=None,
+        variants=[],
+        webpage_url=webpage_url,
+        images=images,
+    )
+
+
+def resolve(url: str, timeout: float = 25.0, attempts: int = 2) -> DouyinInfo:
+    url = extract_url(url) or (url or "").strip()
+    if not url:
+        raise DouyinError("没有在这段文字里找到抖音链接。")
+    if not is_douyin_url(url):
+        raise DouyinError("这不是抖音链接。")
+    canonical = _expand_url(url)
+    key = _canonical_id(canonical)
+    cached = _CACHE.get(key)
     if cached and time.time() - cached[0] < _CACHE_TTL:
         return cached[1]
+    is_note = "/note/" in canonical
     if not find_browser():
         raise DouyinError("解析抖音需要一个本机浏览器：请安装 Microsoft Edge 或 Google Chrome 后重试。")
     last_error: Exception | None = None
     for attempt in range(attempts):
         try:
-            payload = _cdp_resolve(url, timeout=timeout)
-            info = parse_detail(payload, webpage_url=url)
-            _CACHE[url] = (time.time(), info)
+            if is_note:
+                info = parse_note(_cdp_note(canonical, timeout=timeout), webpage_url=canonical)
+            else:
+                payload = _cdp_resolve(canonical, timeout=timeout)
+                info = parse_detail(payload, webpage_url=canonical)
+            _CACHE[key] = (time.time(), info)
             return info
         except DouyinError as exc:
             last_error = exc
             if attempt + 1 < attempts:
-                time.sleep(1.5 * (attempt + 1))
+                time.sleep(1.0)
         except Exception as exc:  # noqa: BLE001
             last_error = exc
             if attempt + 1 < attempts:
-                time.sleep(1.5 * (attempt + 1))
+                time.sleep(1.0)
     assert last_error is not None
     raise DouyinError(str(last_error))
 
@@ -386,6 +646,29 @@ def resolve(url: str, timeout: float = 60.0, attempts: int = 3) -> DouyinInfo:
 # yt-dlp compatible info
 # ---------------------------------------------------------------------------
 def to_info_dict(info: DouyinInfo) -> dict[str, Any]:
+    if info.is_images:
+        return {
+            "id": info.video_id,
+            "title": info.title,
+            "uploader": info.uploader,
+            "channel": info.uploader,
+            "duration": None,
+            "thumbnail": info.thumbnail,
+            "extractor_key": "Douyin",
+            "extractor": "Douyin",
+            "webpage_url": info.webpage_url,
+            "formats": [{
+                "format_id": "douyin-images",
+                "ext": "zip",
+                "height": None,
+                "width": None,
+                "format_note": f"图文 · {len(info.images)} 张",
+                "filesize": None,
+            }],
+            "image_count": len(info.images),
+            "_type": "images",
+            "_glowdl_douyin": True,
+        }
     formats = []
     for index, variant in enumerate(info.variants):
         filesize = int(variant.bitrate * info.duration / 8) if info.duration else None
@@ -431,7 +714,7 @@ def _pick_variant(info: DouyinInfo, preset_key: str) -> DouyinVariant:
     return info.best
 
 
-def render_filename(template: str, info: DouyinInfo) -> str:
+def render_filename(template: str, info: DouyinInfo, ext: str = "mp4") -> str:
     title = paths.sanitize_filename(info.title)
     uploader = paths.sanitize_filename(info.uploader or "抖音")
     video_id = paths.sanitize_filename(info.video_id or "video")
@@ -439,7 +722,7 @@ def render_filename(template: str, info: DouyinInfo) -> str:
     rendered = (rendered.replace("%(title)s", title)
                         .replace("%(id)s", video_id)
                         .replace("%(uploader)s", uploader)
-                        .replace("%(ext)s", "mp4")
+                        .replace("%(ext)s", ext)
                         .replace("%(duration)s", str(int(info.duration or 0))))
     return paths.sanitize_filename(rendered, max_length=150)
 
@@ -456,7 +739,7 @@ def _download_http(url: str, target: Path, progress, cancel_event) -> None:
         headers["Range"] = f"bytes={existing}-"
     request = urllib.request.Request(url, headers=headers)
     try:
-        response = urllib.request.urlopen(request, timeout=30)
+        response = urllib.request.urlopen(request, timeout=30, context=_ssl_context())
     except urllib.error.HTTPError as exc:
         if existing and exc.code == 416:
             part.replace(target)
@@ -540,7 +823,7 @@ def _postprocess(video: Path, info: DouyinInfo, settings, preset_key: str) -> Pa
         try:
             cover_path = video.with_name(".glowdl-cover.jpg")
             request = urllib.request.Request(info.thumbnail, headers=_http_headers())
-            with urllib.request.urlopen(request, timeout=20) as resp, open(cover_path, "wb") as fh:
+            with urllib.request.urlopen(request, timeout=20, context=_ssl_context()) as resp, open(cover_path, "wb") as fh:
                 shutil.copyfileobj(resp, fh)
             if cover_path.stat().st_size < 100:
                 cover_path.unlink(missing_ok=True)
@@ -567,6 +850,37 @@ def _postprocess(video: Path, info: DouyinInfo, settings, preset_key: str) -> Pa
     return video
 
 
+def _download_images(info: DouyinInfo, settings, progress, cancel_event,
+                     outdir: str | Path | None) -> tuple[Path, DouyinInfo]:
+    target_dir = Path(outdir) if outdir else settings.output_dir
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target = target_dir / render_filename(settings.filename_template, info, ext="zip")
+    target = paths.unique_path(target)
+    work = Path(tempfile.mkdtemp(prefix="glowdl-douyin-images-"))
+    try:
+        files: list[Path] = []
+        for index, url in enumerate(info.images):
+            if cancel_event is not None and cancel_event.is_set():
+                raise DouyinCancelled()
+            suffix = Path(urlparse(url).path).suffix.lower()
+            if suffix not in (".jpg", ".jpeg", ".png", ".webp", ".heic"):
+                suffix = ".webp"
+            item = work / f"{index + 1:02d}{suffix}"
+            _download_http(url, item, None, cancel_event)
+            files.append(item)
+        import zipfile
+
+        with zipfile.ZipFile(target, "w", compression=zipfile.ZIP_STORED) as archive:
+            for index, item in enumerate(files):
+                archive.write(item, arcname=f"{index + 1:02d}{item.suffix}")
+        if progress:
+            progress({"status": "finished", "downloaded_bytes": target.stat().st_size,
+                      "total_bytes": target.stat().st_size, "filename": str(target)})
+        return target, info
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+
 def download(
     url: str,
     settings,
@@ -576,6 +890,15 @@ def download(
     outdir: str | Path | None = None,
 ) -> tuple[Path, DouyinInfo]:
     info = resolve(url)
+    if info.is_images:
+        try:
+            return _download_images(info, settings, progress, cancel_event, outdir)
+        except DouyinCancelled:
+            raise
+        except DouyinError:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise DouyinError(f"抖音图文下载失败：{exc}") from exc
     variant = _pick_variant(info, preset_key)
     target_dir = Path(outdir) if outdir else settings.output_dir
     target_dir.mkdir(parents=True, exist_ok=True)

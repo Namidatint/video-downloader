@@ -322,11 +322,11 @@ class HomePage(QWidget):
         self.preset_combo.setMinimumWidth(200)
         self.preset_combo.currentIndexChanged.connect(self._on_preset_changed)
         quality_row.addWidget(self.preset_combo, 1)
-        formats_btn = QPushButton("全部格式")
-        formats_btn.setProperty("role", "ghost")
-        formats_btn.setCursor(Qt.PointingHandCursor)
-        formats_btn.clicked.connect(self._show_formats)
-        quality_row.addWidget(formats_btn)
+        self.formats_btn = QPushButton("全部格式")
+        self.formats_btn.setProperty("role", "ghost")
+        self.formats_btn.setCursor(Qt.PointingHandCursor)
+        self.formats_btn.clicked.connect(self._show_formats)
+        quality_row.addWidget(self.formats_btn)
         info_box.addLayout(quality_row)
         self.preset_hint = QLabel("")
         self.preset_hint.setObjectName("Dim")
@@ -458,8 +458,13 @@ class HomePage(QWidget):
         self.site_badge.setText(site_label(summary["extractor"]))
         uploader = summary["uploader"]
         self.uploader_label.setText(uploader[:28] if uploader else "")
-        self.duration_label.setText(
-            paths.human_duration(summary["duration"]) if summary["duration"] else "")
+        is_images = info.get("_type") == "images"
+        if is_images:
+            self.duration_label.setText(f"图文 · {int(info.get('image_count') or 0)} 张")
+        else:
+            self.duration_label.setText(
+                paths.human_duration(summary["duration"]) if summary["duration"] else "")
+        self.download_btn.setText("下载图文" if is_images else "开始下载")
         views = summary["view_count"]
         self.views_label.setText(f"· {_compact_number(views)} 次播放" if views else "")
         self.title_label.setText(summary["title"])
@@ -485,6 +490,14 @@ class HomePage(QWidget):
         lang = self.settings.effective_language()
         self.preset_combo.blockSignals(True)
         self.preset_combo.clear()
+        if (self._info or {}).get("_type") == "images":
+            count = int((self._info or {}).get("image_count") or 0)
+            self.preset_combo.addItem(f"图文 · {count} 张（打包 ZIP）", "best")
+            self.formats_btn.hide()
+            self.preset_hint.setText("图文作品会打包成一个 ZIP，内含原始图片。")
+            self.preset_combo.blockSignals(False)
+            return
+        self.formats_btn.show()
         availability = fmt.preset_availability(self._info, lang)
         target_index = 0
         for preset, ok, hint in availability:

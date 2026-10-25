@@ -184,6 +184,10 @@ def probe(url: str, settings: Settings, playlist: bool = False,
     url = (url or "").strip()
     if not url:
         raise DownloadError(translate("Unsupported URL: empty"))
+    extracted = douyin.extract_url(url)
+    if extracted and douyin.is_douyin_url(extracted):
+        # Share-sheet text: "5.38 复制打开抖音… https://v.douyin.com/…".
+        url = extracted
 
     if douyin.is_douyin_url(url):
         # yt-dlp's Douyin extractor currently requires signed cookies and fails;
@@ -332,6 +336,10 @@ def download(
     import yt_dlp
 
     started = time.time()
+
+    extracted = douyin.extract_url(url)
+    if extracted and douyin.is_douyin_url(extracted):
+        url = extracted
 
     if douyin.is_douyin_url(url):
         try:
