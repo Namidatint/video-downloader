@@ -253,48 +253,71 @@ def icon(name: str, color: str | QColor = "#E8EDF7", size: int = 20) -> QIcon:
 
 
 def app_pixmap(size: int = 256) -> QPixmap:
-    """Rounded app mark: blue tile with a white download arrow."""
+    """Rounded app mark: blue tile, white play glyph, amber download badge."""
     px = QPixmap(size, size)
     px.fill(Qt.transparent)
     painter = QPainter(px)
     painter.setRenderHint(QPainter.Antialiasing, True)
+
     rect = QRectF(size * 0.04, size * 0.04, size * 0.92, size * 0.92)
     radius = size * 0.22
+    tile = QPainterPath()
+    tile.addRoundedRect(rect, radius, radius)
     gradient = QLinearGradient(rect.topLeft(), rect.bottomRight())
-    gradient.setColorAt(0.0, QColor("#3A9BFF"))
-    gradient.setColorAt(0.55, QColor("#0078D7"))
-    gradient.setColorAt(1.0, QColor("#004E9E"))
-    path = QPainterPath()
-    path.addRoundedRect(rect, radius, radius)
+    gradient.setColorAt(0.0, QColor("#53B1FF"))
+    gradient.setColorAt(0.5, QColor("#0078D7"))
+    gradient.setColorAt(1.0, QColor("#003F86"))
     painter.setPen(Qt.NoPen)
     painter.setBrush(gradient)
-    painter.drawPath(path)
+    painter.drawPath(tile)
 
-    # gentle top highlight
-    highlight = QLinearGradient(rect.topLeft(), rect.bottomLeft())
-    highlight.setColorAt(0.0, QColor(255, 255, 255, 55))
-    highlight.setColorAt(0.55, QColor(255, 255, 255, 0))
-    painter.setBrush(highlight)
-    painter.drawPath(path)
+    # diagonal light sweep + top highlight
+    painter.save()
+    painter.setClipPath(tile)
+    sweep = QLinearGradient(rect.topLeft(), rect.center())
+    sweep.setColorAt(0.0, QColor(255, 255, 255, 58))
+    sweep.setColorAt(0.6, QColor(255, 255, 255, 0))
+    painter.setBrush(sweep)
+    painter.drawPath(tile)
+    painter.restore()
 
-    # white download glyph
-    pen = QPen(QColor("#FFFFFF"), max(1.0, size * 0.075))
+    # white play triangle, slightly rounded
+    cx, cy = size * 0.44, size * 0.44
+    tri = QPainterPath()
+    tri.moveTo(cx - size * 0.11, cy - size * 0.17)
+    tri.lineTo(cx + size * 0.20, cy)
+    tri.lineTo(cx - size * 0.11, cy + size * 0.17)
+    tri.closeSubpath()
+    painter.setPen(Qt.NoPen)
+    painter.setBrush(QColor("#FFFFFF"))
+    painter.drawPath(tri)
+
+    # amber download badge
+    badge_center = QPointF(size * 0.70, size * 0.70)
+    badge_radius = size * 0.175
+    painter.setBrush(QColor("#FFFFFF"))
+    painter.drawEllipse(badge_center, badge_radius + size * 0.022, badge_radius + size * 0.022)
+    badge = QLinearGradient(badge_center.x(), badge_center.y() - badge_radius,
+                            badge_center.x(), badge_center.y() + badge_radius)
+    badge.setColorAt(0.0, QColor("#FFC44D"))
+    badge.setColorAt(1.0, QColor("#F2A100"))
+    painter.setBrush(badge)
+    painter.drawEllipse(badge_center, badge_radius, badge_radius)
+
+    pen = QPen(QColor("#FFFFFF"), max(1.0, size * 0.035))
     pen.setCapStyle(Qt.RoundCap)
     pen.setJoinStyle(Qt.RoundJoin)
     painter.setPen(pen)
     painter.setBrush(Qt.NoBrush)
-    cx = size * 0.5
-    glyph = QPainterPath()
-    glyph.moveTo(cx, size * 0.24)
-    glyph.lineTo(cx, size * 0.56)
-    glyph.moveTo(size * 0.34, size * 0.44)
-    glyph.lineTo(cx, size * 0.59)
-    glyph.lineTo(size * 0.66, size * 0.44)
-    painter.drawPath(glyph)
-    tray = QPainterPath()
-    tray.moveTo(size * 0.31, size * 0.73)
-    tray.lineTo(size * 0.69, size * 0.73)
-    painter.drawPath(tray)
+    bx, by = badge_center.x(), badge_center.y()
+    arrow = QPainterPath()
+    arrow.moveTo(bx, by - size * 0.085)
+    arrow.lineTo(bx, by + size * 0.035)
+    arrow.moveTo(bx - size * 0.058, by - size * 0.018)
+    arrow.lineTo(bx, by + size * 0.045)
+    arrow.lineTo(bx + size * 0.058, by - size * 0.018)
+    painter.drawPath(arrow)
+
     painter.end()
     return px
 
