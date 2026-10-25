@@ -7,7 +7,7 @@
   <img src="app/resources/icon.png" width="112" alt="视频下载器 icon">
 </p>
 
-**GitHub 仓库**：[Namidatint/video-downloader](https://github.com/Namidatint/video-downloader) · **下载**：[Releases](https://github.com/Namidatint/video-downloader/releases/tag/v1.0.0)
+**GitHub 仓库**：[Namidatint/video-downloader](https://github.com/Namidatint/video-downloader) · **下载**：[Windows 便携版](https://github.com/Namidatint/video-downloader/releases/download/v1.0.0/VideoDownloader-1.0.0-Windows-x64.zip) · [macOS 安装包](https://github.com/Namidatint/video-downloader/releases/download/v1.0.0/VideoDownloader-1.0.0-macOS.dmg)
 
 ![下载页](docs/screenshots/01-home.png)
 
@@ -122,13 +122,13 @@ macOS `.app` 已在本机启动验证：解析本地 HTTP 视频 → 入队下�
 
 **macOS**
 
-1. 下载 `视频下载器-1.0.0-macOS.dmg`，拖入「应用程序」。
+1. 下载 `VideoDownloader-1.0.0-macOS.dmg`，打开后把「视频下载器」拖入「应用程序」。
 2. 首次打开若提示「无法验证开发者」：右键 → 打开（本仓库用的是 ad-hoc 签名，未做 Apple 公证）。
 3. 直接粘贴链接开始下载。
 
 **Windows**
 
-1. 解压 `视频下载器-1.0.0-Windows-x64.zip` 到任意目录（不要放在 `C:\Program Files`，避免无写权限）。
+1. 解压 `VideoDownloader-1.0.0-Windows-x64.zip` 到任意目录（不要放在 `C:\Program Files`，避免无写权限）。
 2. 双击 `视频下载器.exe`。
 3. 若 SmartScreen 拦截：更多信息 → 仍要运行。
 
