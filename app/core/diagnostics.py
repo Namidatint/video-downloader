@@ -138,7 +138,7 @@ def _site_probe(host: str, timeout: float = 6.0) -> tuple[bool, str]:
     try:
         request = urllib.request.Request(
             f"https://{host}/",
-            headers={"User-Agent": "Mozilla/5.0 (GlowDL diagnostics)"},
+            headers={"User-Agent": "Mozilla/5.0 (视频下载器 diagnostics)"},
         )
         with urllib.request.urlopen(request, timeout=timeout) as resp:
             return True, f"HTTP {resp.status}"

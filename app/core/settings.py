@@ -81,6 +81,10 @@ class Settings:
             # v2 redesign: Windows 10 Settings light theme by default.
             settings.theme = "light"
             settings.schema_version = 2
+        # App rename: keep the old default download folder from sticking around.
+        legacy_download = str(Path.home() / "Downloads" / "GlowDL")
+        if str(settings.download_dir).rstrip("/\\") == legacy_download:
+            settings.download_dir = str(paths.default_download_dir())
         settings.validate()
         return settings
 

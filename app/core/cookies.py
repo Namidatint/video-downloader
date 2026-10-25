@@ -92,7 +92,7 @@ def convert_json_cookies(json_path: str | Path) -> Path:
     data = json.loads(src.read_text(encoding="utf-8"))
     if isinstance(data, dict):
         data = data.get("cookies", [])
-    lines = ["# Netscape HTTP Cookie File", "# Converted by GlowDL", ""]
+    lines = ["# Netscape HTTP Cookie File", "# Converted by 视频下载器", ""]
     now = 0
     for item in data:
         if not isinstance(item, dict):
@@ -178,6 +178,6 @@ def guess_installed_browsers() -> list[tuple[str, str]]:
 def cookie_hint(lang: str = "zh") -> str:
     if lang == "en":
         return ("Sign in with your browser first, then choose that browser here. "
-                "GlowDL only reads cookies locally; nothing is uploaded.")
+                "视频下载器 only reads cookies locally; nothing is uploaded.")
     return ("请先在浏览器里登录目标网站，再在这里选择对应的浏览器。"
-            "GlowDL 只在本机读取 Cookie，不会上传任何数据。")
+            "视频下载器 只在本机读取 Cookie，不会上传任何数据。")

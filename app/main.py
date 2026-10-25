@@ -1,4 +1,4 @@
-"""GlowDL entry point.
+"""视频下载器 entry point.
 
 Usage:
     python -m app.main                 # launch the desktop GUI
@@ -78,7 +78,7 @@ def main(argv: list[str] | None = None) -> int:
     from PySide6.QtCore import Qt
     from PySide6.QtWidgets import QApplication
 
-    from app import APP_ID, APP_NAME, APP_NAME_ZH, __version__
+    from app import APP_AUTHOR, APP_ID, APP_NAME, __version__
     from app.core.settings import Settings
     from app.ui import icons, theme
     from app.ui.main_window import MainWindow
@@ -86,7 +86,7 @@ def main(argv: list[str] | None = None) -> int:
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
     app = QApplication(sys.argv[:1] + argv)
     app.setApplicationName(APP_NAME)
-    app.setApplicationDisplayName(f"{APP_NAME} · {APP_NAME_ZH}")
+    app.setApplicationDisplayName(f"{APP_NAME} · by {APP_AUTHOR}")
     app.setOrganizationName(APP_NAME)
     app.setApplicationVersion(__version__)
     app.setDesktopFileName(APP_ID)

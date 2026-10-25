@@ -1,10 +1,10 @@
-# GlowDL · 拾光下载器
+# 视频下载器 · by NamidaTint
 
 > 以 [yt-dlp](https://github.com/yt-dlp/yt-dlp) 为内核的 Windows / macOS 桌面视频下载器。
 > 把「装 Python、敲命令、单独编译 ffmpeg、手动导 Cookie、看不懂报错」这些坑，全部收进一个双击即用的窗口里。
 
 <p align="center">
-  <img src="app/resources/icon.png" width="112" alt="GlowDL icon">
+  <img src="app/resources/icon.png" width="112" alt="视频下载器 icon">
 </p>
 
 ![下载页](docs/screenshots/01-home.png)
@@ -13,7 +13,7 @@
 
 ## 一、这是什么
 
-**GlowDL** 不是另写一个下载引擎，而是给 yt-dlp 套上一个真正的桌面软件外壳：
+**视频下载器** 不是另写一个下载引擎，而是给 yt-dlp 套上一个真正的桌面软件外壳：
 
 - 内核能力 100% 来自 **yt-dlp**（1800+ 站点、持续更新的解析器）；
 - 界面用 **PySide6 / Qt 6** 编写，**同一套代码同时产出 Windows 与 macOS 应用**；
@@ -73,8 +73,8 @@ macOS `.app` 已在本机启动验证：解析本地 HTTP 视频 → 入队下�
 - 字号、文件名模板、下载目录、限速、重试次数、分片并发全部可调。
 
 **跨平台**
-- macOS：`GlowDL.app` / `.dmg`（PyInstaller + ad-hoc 签名）。
-- Windows：`GlowDL.exe` one-dir 压缩包（附 `.ico` 图标、SmartScreen 说明）。
+- macOS：`视频下载器.app` / `.dmg`（PyInstaller + ad-hoc 签名）。
+- Windows：`视频下载器.exe` one-dir 压缩包（附 `.ico` 图标、SmartScreen 说明）。
 - 统一使用系统原生窗口、HiDPI、深浅两套主题（切换后重启生效）、系统托盘通知。
 
 **稳定性**
@@ -90,9 +90,9 @@ macOS `.app` 已在本机启动验证：解析本地 HTTP 视频 → 入队下�
 
 ---
 
-## 四、第二个网站提到的问题 → GlowDL 的解法
+## 四、第二个网站提到的问题 → 视频下载器的解法
 
-| # | 文章/社区里的典型坑 | 传统 yt-dlp 做法 | GlowDL 的做法 | 代码位置 |
+| # | 文章/社区里的典型坑 | 传统 yt-dlp 做法 | 视频下载器的做法 | 代码位置 |
 |---|---|---|---|---|
 | 1 | 先装 Python、再 `pip install`，命令行劝退 | 命令行 | 双击即用的安装包，GUI 全中文 | `app/ui/main_window.py` |
 | 2 | 下载 1080P 报「ffmpeg not found」，音画分离无法合并 | 手动下载 ffmpeg 并配置 PATH | `imageio-ffmpeg` 内置二进制，启动即用；诊所自动定位 | `app/core/ffmpeg_tools.py` |
@@ -120,14 +120,14 @@ macOS `.app` 已在本机启动验证：解析本地 HTTP 视频 → 入队下�
 
 **macOS**
 
-1. 下载 `GlowDL-1.0.0-macOS.dmg`，拖入「应用程序」。
+1. 下载 `视频下载器-1.0.0-macOS.dmg`，拖入「应用程序」。
 2. 首次打开若提示「无法验证开发者」：右键 → 打开（本仓库用的是 ad-hoc 签名，未做 Apple 公证）。
 3. 直接粘贴链接开始下载。
 
 **Windows**
 
-1. 解压 `GlowDL-1.0.0-Windows-x64.zip` 到任意目录（不要放在 `C:\Program Files`，避免无写权限）。
-2. 双击 `GlowDL.exe`。
+1. 解压 `视频下载器-1.0.0-Windows-x64.zip` 到任意目录（不要放在 `C:\Program Files`，避免无写权限）。
+2. 双击 `视频下载器.exe`。
 3. 若 SmartScreen 拦截：更多信息 → 仍要运行。
 
 > 也可以直接 `python -m app.main` 从源码运行，见方式 B。
@@ -142,7 +142,7 @@ pip install -r requirements.txt
 
 python -m app.main                 # 启动 GUI
 python -m app.main --diagnose      # 环境自检（命令行）
-python -m app.main --cli "URL" -q 1080 -o ~/Downloads/GlowDL   # 无界面下载
+python -m app.main --cli "URL" -q 1080 -o ~/Downloads/视频下载器   # 无界面下载
 ```
 
 要求：Python 3.9+（推荐 3.10/3.11），Windows 10+ / macOS 11+。
@@ -268,10 +268,10 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python scripts/preview_ui.py docs/screenshot
 ## 九、打包
 
 ```bash
-# macOS → dist/GlowDL.app + dist/GlowDL-1.0.0-macOS.dmg
+# macOS → dist/视频下载器.app + dist/视频下载器-1.0.0-macOS.dmg
 bash scripts/build_macos.sh
 
-# Windows → dist/GlowDL/GlowDL.exe + dist/GlowDL-1.0.0-Windows-x64.zip
+# Windows → dist/视频下载器/视频下载器.exe + dist/视频下载器-1.0.0-Windows-x64.zip
 powershell -ExecutionPolicy Bypass -File scripts\build_windows.ps1
 ```
 
@@ -286,7 +286,7 @@ GitHub Actions 已配置双平台矩阵，推送 tag 即可在 Actions 里下载
 
 | 步骤 | 命令 / 操作 | 预期 |
 |---|---|---|
-| 1 | 双击 `dist/GlowDL.app`（或 `python -m app.main`） | 2 秒内出现首页，无控制台窗口 |
+| 1 | 双击 `dist/视频下载器.app`（或 `python -m app.main`） | 2 秒内出现首页，无控制台窗口 |
 | 2 | 粘贴任意 B 站视频链接 → 解析 → 开始下载 | 出现封面/标题；队列出现进度、速度、剩余时间 |
 | 3 | 设置 → 登录态 Cookie → 选择已登录浏览器 → 重试 1080P | 原本 480P 的视频可下 1080P+ |
 | 4 | 诊断 → 重新自检 | 12 项检查数秒内出结果；有问题的项带「修复」 |
@@ -308,7 +308,7 @@ GitHub Actions 已配置双平台矩阵，推送 tag 即可在 Actions 里下载
 
 ## 十一、合规与免责声明
 
-- GlowDL 不提供、不内置任何账号，**不破解 DRM、不绕过付费墙**；遇到 DRM/会员内容会明确提示并停止。
+- 视频下载器 不提供、不内置任何账号，**不破解 DRM、不绕过付费墙**；遇到 DRM/会员内容会明确提示并停止。
 - 请仅下载**你有权保存**的内容（自己的作品、CC 授权、明确允许离线保存的资源等），
   并遵守目标站点的服务条款与所在地法律。
 - 软件按 MIT 协议开源，不提供任何担保。

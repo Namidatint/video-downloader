@@ -5,11 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "glowdl"
 version = "1.0.0"
-description = "GlowDL 拾光下载器 — 基于 yt-dlp 的跨平台视频下载桌面应用（Windows / macOS）"
+description = "视频下载器 — 跨平台视频下载桌面应用（Windows / macOS），by NamidaTint"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-authors = [{ name = "GlowDL Contributors" }]
+authors = [{ name = "NamidaTint" }]
 keywords = ["yt-dlp", "downloader", "video", "pyside6", "bilibili", "youtube", "douyin"]
 dependencies = [
     "PySide6-Essentials>=6.7,<6.8",

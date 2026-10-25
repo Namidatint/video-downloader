@@ -1,5 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""PyInstaller spec for GlowDL (Windows / macOS, one-dir build)."""
+"""PyInstaller spec for 视频下载器 (Windows / macOS, one-dir build)."""
 
 import os
 import sys
@@ -38,7 +38,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="GlowDL",
+    name="视频下载器",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -59,23 +59,23 @@ coll = COLLECT(
     strip=False,
     upx=False,
     upx_exclude=[],
-    name="GlowDL",
+    name="视频下载器",
 )
 
 if IS_MAC:
     app = BUNDLE(
         coll,
-        name="GlowDL.app",
+        name="视频下载器.app",
         icon=ICNS,
-        bundle_identifier="com.glowdl.app",
+        bundle_identifier="com.namidatint.videodownloader",
         info_plist={
-            "CFBundleDisplayName": "GlowDL 拾光下载器",
-            "CFBundleName": "GlowDL",
+            "CFBundleDisplayName": "视频下载器",
+            "CFBundleName": "视频下载器",
             "CFBundleShortVersionString": "1.0.0",
             "CFBundleVersion": "1.0.0",
             "NSHighResolutionCapable": True,
             "LSMinimumSystemVersion": "11.0",
-            "NSHumanReadableCopyright": "仅用于下载你有权保存的内容",
+            "NSHumanReadableCopyright": "by NamidaTint · 仅用于下载你有权保存的内容",
             "CFBundleDocumentTypes": [
                 {
                     "CFBundleTypeName": "Video URL",

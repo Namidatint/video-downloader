@@ -49,7 +49,7 @@ def _well_known_paths() -> list[str]:
         candidates += [
             Path("C:/ffmpeg/bin/ffmpeg.exe"),
             Path(os.environ.get("ProgramFiles", "C:/Program Files")) / "ffmpeg/bin/ffmpeg.exe",
-            Path(os.environ.get("LOCALAPPDATA", "")) / "GlowDL/ffmpeg/ffmpeg.exe",
+            Path(os.environ.get("LOCALAPPDATA", "")) / "视频下载器/ffmpeg/ffmpeg.exe",
         ]
     out = []
     for path in candidates:
@@ -78,7 +78,7 @@ def find_ffmpeg(custom: str = "") -> FFmpegStatus:
         return FFmpegStatus(True, env, "custom", "来自环境变量")
 
     for path in _bundled_candidates():
-        return FFmpegStatus(True, path, "bundled", "GlowDL 内置 ffmpeg")
+        return FFmpegStatus(True, path, "bundled", "已内置音视频组件")
 
     which = shutil.which("ffmpeg")
     if which:

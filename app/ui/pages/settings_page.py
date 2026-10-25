@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (QCheckBox, QComboBox, QFileDialog, QFrame, QHBoxL
                                QLabel, QLineEdit, QPushButton, QScrollArea, QSpinBox,
                                QVBoxLayout, QWidget)
 
-from app import __version__ as app_version
+from app import APP_AUTHOR, __version__ as app_version
 from app.core import cookies as cookies_mod
 from app.core import formats as fmt, paths
 from app.core.settings import Settings
@@ -330,7 +330,7 @@ class SettingsPage(QWidget):
 
     def _build_about_card(self) -> QFrame:
         card, layout = _card("关于")
-        version = QLabel(f"拾光下载器  {app_version}")
+        version = QLabel(f"视频下载器  {app_version}")
         version.setObjectName("Value")
         legal = QLabel("仅用于下载你有权保存的内容，请遵守目标站点的服务条款与当地法律。")
         legal.setObjectName("SectionHint")
@@ -339,7 +339,10 @@ class SettingsPage(QWidget):
         box_layout = QVBoxLayout(box)
         box_layout.setContentsMargins(20, 4, 20, 16)
         box_layout.setSpacing(4)
+        byline = QLabel(f"by {APP_AUTHOR}")
+        byline.setObjectName("Muted")
         box_layout.addWidget(version)
+        box_layout.addWidget(byline)
         box_layout.addWidget(legal)
         layout.addWidget(box)
         return card

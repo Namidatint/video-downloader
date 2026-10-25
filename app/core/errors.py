@@ -126,10 +126,10 @@ RULES: tuple[_Rule, ...] = (
         r"login required|only available (?:for|to) (?:registered|logged.?in)|"
         r"requires? (?:authentication|login)|This video is only available for",
         "该内容需要登录后才能访问",
-        "B 站高画质、会员内容或私密视频需要账号登录态。请先在浏览器登录，再让 GlowDL 读取该浏览器的 Cookie。",
+        "B 站高画质、会员内容或私密视频需要账号登录态。请先在浏览器登录，再让 视频下载器 读取该浏览器的 Cookie。",
         "Login required",
         "HD quality, member-only or private content needs a signed-in session. "
-        "Sign in with your browser, then let GlowDL read that browser's cookies.",
+        "Sign in with your browser, then let 视频下载器 read that browser's cookies.",
         fixes=(Fix(ACTION_COOKIES, "读取浏览器 Cookie", "Use browser cookies"),
                Fix(ACTION_LOGIN, "打开站点登录", "Open site login"),
                Fix(ACTION_RETRY, "重试", "Retry")),
@@ -152,10 +152,10 @@ RULES: tuple[_Rule, ...] = (
         "drm",
         r"DRM|digital rights management|protected by (?:DRM|widevine)|widevine",
         "该视频受 DRM 版权保护",
-        "DRM 加密内容无法通过下载器获取，这是版权保护机制，GlowDL 不会也不应绕过。"
+        "DRM 加密内容无法通过下载器获取，这是版权保护机制，视频下载器 不会也不应绕过。"
         "请通过官方客户端观看。",
         "DRM protected",
-        "DRM-encrypted content cannot be downloaded; this is copy protection and GlowDL will "
+        "DRM-encrypted content cannot be downloaded; this is copy protection and 视频下载器 will "
         "not bypass it. Please use the official player.",
         severity="warning",
     ),
@@ -174,9 +174,9 @@ RULES: tuple[_Rule, ...] = (
         r"members.?only|paid|purchase|rental|premium (?:only|required)|"
         r"This video requires payment",
         "该内容需要会员或购买",
-        "付费/会员专享内容不会因为登录而解锁；GlowDL 不会绕过付费墙。",
+        "付费/会员专享内容不会因为登录而解锁；视频下载器 不会绕过付费墙。",
         "Member-only content",
-        "Paid or membership content is not unlocked by signing in; GlowDL does not bypass paywalls.",
+        "Paid or membership content is not unlocked by signing in; 视频下载器 does not bypass paywalls.",
         severity="warning",
     ),
     _rule(
@@ -255,10 +255,10 @@ RULES: tuple[_Rule, ...] = (
         r"certificate verify failed|SSL: |CERTIFICATE_VERIFY_FAILED|ssl error",
         "HTTPS 证书校验失败",
         "系统缺少根证书、或代理软件做了 HTTPS 拦截。可在「设置 → 网络」关闭/调整代理，"
-        "或点击修复让 GlowDL 使用内置证书库。",
+        "或点击修复让 视频下载器 使用内置证书库。",
         "TLS certificate verification failed",
         "Missing root certificates or a TLS-intercepting proxy. Adjust proxy settings or let "
-        "GlowDL use its bundled certificate store.",
+        "视频下载器 use its bundled certificate store.",
         fixes=(Fix(ACTION_DIAGNOSTICS, "运行网络自检", "Run network check"),
                Fix(ACTION_PROXY, "配置代理", "Configure proxy")),
     ),
@@ -303,9 +303,9 @@ RULES: tuple[_Rule, ...] = (
         "timeout",
         r"timed out|Timeout|read timeout|Connection reset|Remote end closed",
         "网络超时或被重置",
-        "站点响应太慢或连接被中断。GlowDL 会自动重试；也可以降低并发、开启代理后再试。",
+        "站点响应太慢或连接被中断。视频下载器 会自动重试；也可以降低并发、开启代理后再试。",
         "Network timeout",
-        "The site was slow or the connection was reset. GlowDL retries automatically; lower "
+        "The site was slow or the connection was reset. 视频下载器 retries automatically; lower "
         "concurrency or use a proxy if it persists.",
         fixes=(Fix(ACTION_RETRY, "重试", "Retry"),
                Fix(ACTION_SETTINGS, "降低并发", "Lower concurrency")),

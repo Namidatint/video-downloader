@@ -190,6 +190,7 @@ QToolTip {
 /* ---------------- Windows 10 style left pane ---------------- */
 #Sidebar { background: $sidebar; border-right: 1px solid $border; }
 #SidebarTitle { font-size: 15px; font-weight: 600; color: $text; }
+#SidebarByline { font-size: 10.5px; color: $muted; }
 #SidebarHeaderButton {
     background: transparent;
     border: none;

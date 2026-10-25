@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import os
 import re
+import shutil
 import sys
 import unicodedata
 from pathlib import Path
 
-APP_DIR_NAME = "GlowDL"
+APP_DIR_NAME = "视频下载器"
+LEGACY_APP_DIR_NAME = "GlowDL"
 
 # Characters that are illegal on Windows (and hostile everywhere).
 _ILLEGAL = {
@@ -37,16 +39,25 @@ def is_macos() -> bool:
     return sys.platform == "darwin"
 
 
-def app_data_dir() -> Path:
-    """Per-user writable directory for config/history/logs."""
+def _app_root() -> Path:
     if is_windows():
         base = os.environ.get("APPDATA") or os.path.expanduser("~")
-        path = Path(base) / APP_DIR_NAME
-    elif is_macos():
-        path = Path.home() / "Library" / "Application Support" / APP_DIR_NAME
-    else:
-        base = os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config")
-        path = Path(base) / APP_DIR_NAME
+        return Path(base)
+    if is_macos():
+        return Path.home() / "Library" / "Application Support"
+    return Path(os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"))
+
+
+def app_data_dir() -> Path:
+    """Per-user writable directory for config/history/logs."""
+    root = _app_root()
+    path = root / APP_DIR_NAME
+    legacy = root / LEGACY_APP_DIR_NAME
+    if not path.exists() and legacy.is_dir():
+        try:
+            shutil.copytree(legacy, path, dirs_exist_ok=True)
+        except OSError:
+            pass
     path.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -66,7 +77,7 @@ def cache_dir() -> Path:
 
 def default_download_dir() -> Path:
     downloads = Path.home() / "Downloads"
-    path = downloads / "GlowDL" if downloads.is_dir() else Path.home() / "GlowDL"
+    path = downloads / APP_DIR_NAME if downloads.is_dir() else Path.home() / APP_DIR_NAME
     return path
 
 

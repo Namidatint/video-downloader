@@ -56,20 +56,20 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           python -m PyInstaller --noconfirm --clean scripts/glowdl.spec
-          codesign --deep --force --sign - dist/GlowDL.app || true
+          codesign --deep --force --sign - "dist/视频下载器.app" || true
           VERSION=$(python -c "from app import __version__; print(__version__)")
-          hdiutil create -volname GlowDL -srcfolder dist/GlowDL.app -ov -format UDZO "dist/GlowDL-${VERSION}-macOS.dmg"
+          hdiutil create -volname 视频下载器 -srcfolder "dist/视频下载器.app" -ov -format UDZO "dist/视频下载器-${VERSION}-macOS.dmg"
       - name: Build (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           python -m PyInstaller --noconfirm --clean scripts/glowdl.spec
           $version = (python -c "from app import __version__; print(__version__)").Trim()
-          Compress-Archive -Path "dist\GlowDL\*" -DestinationPath "dist\GlowDL-$version-Windows-x64.zip"
+          Compress-Archive -Path "dist\视频下载器\*" -DestinationPath "dist\视频下载器-$version-Windows-x64.zip"
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: GlowDL-${{ matrix.artifact }}
+          name: VideoDownloader-${{ matrix.artifact }}
           path: |
             dist/*.dmg
             dist/*.zip

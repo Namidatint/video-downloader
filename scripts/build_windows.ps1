@@ -1,4 +1,4 @@
-# Build GlowDL.exe on Windows (PowerShell 5+).
+# Build 视频下载器.exe on Windows (PowerShell 5+).
 # Usage:  powershell -ExecutionPolicy Bypass -File scripts\build_windows.ps1
 $ErrorActionPreference = "Stop"
 
@@ -34,13 +34,13 @@ if (Test-Path dist) { Remove-Item -Recurse -Force dist }
 if ($LASTEXITCODE -ne 0) { throw "PyInstaller 打包失败" }
 
 Write-Host "==> 4/5 校验产物"
-$Exe = "dist\GlowDL\GlowDL.exe"
+$Exe = "dist\视频下载器\视频下载器.exe"
 if (-not (Test-Path $Exe)) { throw "未找到 $Exe" }
 Write-Host ("产物大小：{0:N1} MB" -f ((Get-Item $Exe).Length / 1MB))
 
 Write-Host "==> 5/5 生成 zip 压缩包"
 $Version = (& $VenvPython -c "from app import __version__; print(__version__)").Trim()
-$Zip = "dist\GlowDL-$Version-Windows-x64.zip"
+$Zip = "dist\视频下载器-$Version-Windows-x64.zip"
 if (Test-Path $Zip) { Remove-Item -Force $Zip }
-Compress-Archive -Path "dist\GlowDL\*" -DestinationPath $Zip
+Compress-Archive -Path "dist\视频下载器\*" -DestinationPath $Zip
 Write-Host "完成：$Zip"

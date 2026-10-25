@@ -13,7 +13,7 @@ from app.core.settings import Settings
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="glowdl",
-        description="GlowDL 拾光下载器 · 基于 yt-dlp 的命令行模式",
+        description="视频下载器 · by NamidaTint · 命令行模式",
     )
     parser.add_argument("url", nargs="?", help="视频链接")
     parser.add_argument("--cli", action="store_true", help="无界面下载")
@@ -39,7 +39,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.version:
         from app import __version__
 
-        print(f"GlowDL {__version__}")
+        print(f"视频下载器 {__version__}")
+        print("by NamidaTint")
         print(f"Python {sys.version.split()[0]}")
         return 0
 
@@ -58,7 +59,7 @@ def main(argv: list[str] | None = None) -> int:
 
         checks = diagnostics.run_all(settings)
         width = max(len(c.title) for c in checks) + 2
-        print("GlowDL 环境自检")
+        print("视频下载器 环境自检")
         print("=" * 60)
         for check in checks:
             mark = {"pass": "✓", "warn": "!", "fail": "✗"}.get(check.status, "?")

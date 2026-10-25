@@ -36,7 +36,7 @@ core_paths.app_data_dir = lambda: PREVIEW_HOME
 FAKE_INFO = {
     "id": "BV1GJ411x7h7",
     "title": "4K 修复｜把喜欢的视频一键收藏到本地：完整流程演示（字幕与封面）",
-    "uploader": "拾光研究所",
+    "uploader": "影像研究所",
     "duration": 754,
     "thumbnail": "",
     "extractor_key": "BiliBili",
@@ -89,7 +89,7 @@ def make_thumbnail(width: int = 640, height: int = 360) -> QPixmap:
     painter.setFont(font)
     painter.setPen(QColor(255, 255, 255, 190))
     painter.drawText(QRectF(40, height - 62, width - 80, 40), Qt.AlignLeft,
-                     "GlowDL · 1080P / HEVC · 字幕 · 封面")
+                     "视频下载器 · 1080P / HEVC · 字幕 · 封面")
     painter.end()
     return pixmap
 
@@ -117,7 +117,7 @@ def build_tasks(settings: Settings) -> list[DownloadTask]:
     running.started_at = now - 18
 
     done.mark_running()
-    done.filepaths = ["/Users/a1/Downloads/GlowDL/Rick Astley - Never Gonna Give You Up.mp3"]
+    done.filepaths = ["/Users/a1/Downloads/视频下载器/Rick Astley - Never Gonna Give You Up.mp3"]
     done.progress = 100
     done.mark_done()
 
@@ -167,16 +167,16 @@ def main() -> None:
         HistoryEntry(url="https://www.bilibili.com/video/BV1GJ411x7h7",
                      title="4K 修复｜把喜欢的视频一键收藏到本地：完整流程演示",
                      site="哔哩哔哩", preset="1080",
-                     filepath="/Users/a1/Downloads/GlowDL/4K 修复.mp4",
+                     filepath="/Users/a1/Downloads/视频下载器/4K 修复.mp4",
                      filesize=293_000_000, duration=754, finished_at=time.time() - 300),
         HistoryEntry(url="https://youtu.be/dQw4w9WgXcQ",
                      title="Rick Astley - Never Gonna Give You Up", site="YouTube",
                      preset="audio-mp3",
-                     filepath="/Users/a1/Downloads/GlowDL/Rick Astley.mp3",
+                     filepath="/Users/a1/Downloads/视频下载器/Rick Astley.mp3",
                      filesize=4_900_000, duration=213, finished_at=time.time() - 3600),
         HistoryEntry(url="https://www.xiaohongshu.com/explore/66aa",
                      title="周末露营 vlog｜两天一夜", site="小红书", preset="720",
-                     filepath="/Users/a1/Downloads/GlowDL/露营.mp4",
+                     filepath="/Users/a1/Downloads/视频下载器/露营.mp4",
                      filesize=88_000_000, duration=420, finished_at=time.time() - 86400),
     ]
     window.history_page.set_entries(entries)
@@ -193,14 +193,14 @@ def main() -> None:
 
     checks = [
         diagnostics.CheckResult("python", "运行环境 Python", diagnostics.PASS, "Python 3.11.9（Windows）"),
-        diagnostics.CheckResult("platform", "运行平台", diagnostics.PASS, "Windows 11 · GlowDL 1.0.0"),
+        diagnostics.CheckResult("platform", "运行平台", diagnostics.PASS, "Windows 11 · 视频下载器 1.0.0"),
         diagnostics.CheckResult("yt_dlp", "解析组件", diagnostics.PASS,
                                 "已内置，无需安装"),
         diagnostics.CheckResult("ffmpeg", "音视频合并", diagnostics.PASS, "已就绪"),
         diagnostics.CheckResult("postprocess", "封面 / 元数据嵌入", diagnostics.PASS, "已就绪"),
         diagnostics.CheckResult("douyin", "抖音原生解析", diagnostics.PASS, "使用本机 Edge 解析"),
         diagnostics.CheckResult("output_dir", "下载目录可写", diagnostics.PASS,
-                                "D:/Downloads/GlowDL"),
+                                "D:/Downloads/视频下载器"),
         diagnostics.CheckResult("disk", "磁盘剩余空间", diagnostics.PASS, "剩余 214.6 GB"),
         diagnostics.CheckResult("proxy", "代理设置", diagnostics.WARN,
                                 "未启用代理（访问 YouTube 时可能需要）"),

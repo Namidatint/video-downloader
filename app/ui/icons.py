@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from PySide6.QtCore import QPointF, QRectF, Qt
-from PySide6.QtGui import QColor, QIcon, QPainter, QPainterPath, QPen, QPixmap
+from PySide6.QtGui import (QColor, QIcon, QLinearGradient, QPainter, QPainterPath,
+                           QPen, QPixmap)
 
 _ICONS = {
     "download", "list", "clock", "pulse", "gear", "play", "pause", "folder",
@@ -252,40 +253,48 @@ def icon(name: str, color: str | QColor = "#E8EDF7", size: int = 20) -> QIcon:
 
 
 def app_pixmap(size: int = 256) -> QPixmap:
-    """The GlowDL mark: a square contact-sheet cell, paper ink on warm black."""
+    """Rounded app mark: blue tile with a white download arrow."""
     px = QPixmap(size, size)
     px.fill(Qt.transparent)
     painter = QPainter(px)
-    painter.setRenderHint(QPainter.Antialiasing, False)
+    painter.setRenderHint(QPainter.Antialiasing, True)
     rect = QRectF(size * 0.04, size * 0.04, size * 0.92, size * 0.92)
-    painter.fillRect(rect, QColor("#0B0A09"))
-    painter.setPen(QPen(QColor("#4B453C").lighter(115), max(1.0, size * 0.012)))
-    painter.setBrush(Qt.NoBrush)
-    painter.drawRect(rect.adjusted(0, 0, -1, -1))
-
-    # paper-white download glyph
-    pen = QPen(QColor("#F7F4ED"), max(1.0, size * 0.072))
-    pen.setCapStyle(Qt.FlatCap)
-    pen.setJoinStyle(Qt.MiterJoin)
-    painter.setPen(pen)
-    cx = size * 0.5
+    radius = size * 0.22
+    gradient = QLinearGradient(rect.topLeft(), rect.bottomRight())
+    gradient.setColorAt(0.0, QColor("#3A9BFF"))
+    gradient.setColorAt(0.55, QColor("#0078D7"))
+    gradient.setColorAt(1.0, QColor("#004E9E"))
     path = QPainterPath()
-    path.moveTo(cx, size * 0.23)
-    path.lineTo(cx, size * 0.56)
-    path.moveTo(size * 0.35, size * 0.43)
-    path.lineTo(cx, size * 0.58)
-    path.lineTo(size * 0.65, size * 0.43)
-    painter.drawPath(path)
-    path2 = QPainterPath()
-    path2.moveTo(size * 0.31, size * 0.72)
-    path2.lineTo(size * 0.69, size * 0.72)
-    painter.drawPath(path2)
-
-    # one amber registration square — the only colour in the mark
+    path.addRoundedRect(rect, radius, radius)
     painter.setPen(Qt.NoPen)
-    painter.setBrush(QColor("#F2B24A"))
-    painter.drawRect(QRectF(size * 0.70, size * 0.14, size * 0.09, size * 0.09))
+    painter.setBrush(gradient)
+    painter.drawPath(path)
 
+    # gentle top highlight
+    highlight = QLinearGradient(rect.topLeft(), rect.bottomLeft())
+    highlight.setColorAt(0.0, QColor(255, 255, 255, 55))
+    highlight.setColorAt(0.55, QColor(255, 255, 255, 0))
+    painter.setBrush(highlight)
+    painter.drawPath(path)
+
+    # white download glyph
+    pen = QPen(QColor("#FFFFFF"), max(1.0, size * 0.075))
+    pen.setCapStyle(Qt.RoundCap)
+    pen.setJoinStyle(Qt.RoundJoin)
+    painter.setPen(pen)
+    painter.setBrush(Qt.NoBrush)
+    cx = size * 0.5
+    glyph = QPainterPath()
+    glyph.moveTo(cx, size * 0.24)
+    glyph.lineTo(cx, size * 0.56)
+    glyph.moveTo(size * 0.34, size * 0.44)
+    glyph.lineTo(cx, size * 0.59)
+    glyph.lineTo(size * 0.66, size * 0.44)
+    painter.drawPath(glyph)
+    tray = QPainterPath()
+    tray.moveTo(size * 0.31, size * 0.73)
+    tray.lineTo(size * 0.69, size * 0.73)
+    painter.drawPath(tray)
     painter.end()
     return px
 

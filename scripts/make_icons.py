@@ -56,7 +56,7 @@ def write_ico(sizes: dict[int, Path]) -> Path:
 def write_icns(sizes: dict[int, Path]) -> Path | None:
     if sys.platform != "darwin" or not shutil.which("iconutil"):
         return None
-    iconset = RESOURCES / "GlowDL.iconset"
+    iconset = RESOURCES / "VideoDownloader.iconset"
     if iconset.exists():
         shutil.rmtree(iconset)
     iconset.mkdir()

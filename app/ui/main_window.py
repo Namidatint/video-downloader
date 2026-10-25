@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (QApplication, QButtonGroup, QHBoxLayout, QLabel, 
                                QMessageBox, QPushButton, QStackedWidget, QSystemTrayIcon,
                                QVBoxLayout, QWidget)
 
+from app import APP_AUTHOR, APP_NAME
 from app.core import diagnostics, paths
 from app.core.errors import (ACTION_COOKIES, ACTION_COPY, ACTION_DIAGNOSTICS, ACTION_DIRECT,
                              ACTION_FFMPEG, ACTION_LOGIN, ACTION_OPEN_DIR, ACTION_OPEN_URL,
@@ -33,7 +34,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.settings = settings
         self.lang = settings.effective_language()
-        self.setWindowTitle("GlowDL · 拾光下载器")
+        self.setWindowTitle(f"{APP_NAME} · by {APP_AUTHOR}")
         self.setWindowIcon(icons.app_icon())
         self.setMinimumSize(1080, 700)
         self.resize(1240, 820)
@@ -98,9 +99,15 @@ class MainWindow(QMainWindow):
         hamburger.setPixmap(icons.pixmap("list", theme.active["text"], 20))
         hamburger.setFixedSize(22, 22)
         header_layout.addWidget(hamburger)
-        title = QLabel("拾光下载器")
+        title_box = QVBoxLayout()
+        title_box.setSpacing(0)
+        title = QLabel(APP_NAME)
         title.setObjectName("SidebarTitle")
-        header_layout.addWidget(title, 1)
+        byline = QLabel(f"by {APP_AUTHOR}")
+        byline.setObjectName("SidebarByline")
+        title_box.addWidget(title)
+        title_box.addWidget(byline)
+        header_layout.addLayout(title_box, 1)
         layout.addWidget(header)
         layout.addSpacing(8)
 
@@ -186,7 +193,7 @@ class MainWindow(QMainWindow):
         self.tray: QSystemTrayIcon | None = None
         if QSystemTrayIcon.isSystemTrayAvailable():
             self.tray = QSystemTrayIcon(icons.app_icon(), self)
-            self.tray.setToolTip("GlowDL · 拾光下载器")
+            self.tray.setToolTip(f"{APP_NAME} · by {APP_AUTHOR}")
             self.tray.activated.connect(self._on_tray_activated)
             self.tray.show()
 

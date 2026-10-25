@@ -30,7 +30,7 @@ class UpdateError(Exception):
 
 
 def _http_json(url: str, timeout: float = 15.0) -> dict:
-    request = urllib.request.Request(url, headers={"User-Agent": "GlowDL-Updater/1.0"})
+    request = urllib.request.Request(url, headers={"User-Agent": "VideoDownloader-Updater/1.0"})
     with urllib.request.urlopen(request, timeout=timeout) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
@@ -162,7 +162,7 @@ def update_core(progress: Callable[[str], None] | None = None) -> str:
 
     with tempfile.TemporaryDirectory(prefix="glowdl-core-") as tmp:
         wheel_path = Path(tmp) / "yt_dlp.whl"
-        request = urllib.request.Request(url, headers={"User-Agent": "GlowDL-Updater/1.0"})
+        request = urllib.request.Request(url, headers={"User-Agent": "VideoDownloader-Updater/1.0"})
         with urllib.request.urlopen(request, timeout=120) as resp, open(wheel_path, "wb") as fh:
             shutil.copyfileobj(resp, fh)
         report("正在解包内核 …")
