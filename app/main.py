@@ -16,18 +16,38 @@ def _bootstrap_ssl() -> None:
     """Make HTTPS verification work in frozen builds and python.org installs.
 
     Some Windows/macOS Python distributions ship without a CA bundle, which
-    shows up as ``CERTIFICATE_VERIFY_FAILED`` inside yt-dlp. certifi ships with
-    the app, so point the process at it before any network access happens.
+    shows up as ``CERTIFICATE_VERIFY_FAILED`` inside yt-dlp. Prefer certifi
+    (bundled with the app), then fall back to the OS bundle so an intercepting
+    proxy CA trusted by the OS can still verify.
     """
-    if os.environ.get("SSL_CERT_FILE") and os.path.exists(os.environ["SSL_CERT_FILE"]):
+    current = os.environ.get("SSL_CERT_FILE", "")
+    if current and os.path.exists(current):
         return
+
+    bundle = ""
     try:
         import certifi
 
-        os.environ.setdefault("SSL_CERT_FILE", certifi.where())
-        os.environ.setdefault("REQUESTS_CA_BUNDLE", certifi.where())
+        candidate = certifi.where()
+        if candidate and os.path.exists(candidate):
+            bundle = candidate
     except Exception:
         pass
+
+    if not bundle:
+        for candidate in (
+            "/etc/ssl/cert.pem",  # macOS system roots
+            "/etc/ssl/certs/ca-certificates.crt",  # Debian/Ubuntu
+            "/etc/pki/tls/certs/ca-bundle.crt",  # RHEL/Fedora
+            "/usr/local/etc/openssl/cert.pem",  # Homebrew OpenSSL
+        ):
+            if os.path.exists(candidate):
+                bundle = candidate
+                break
+
+    if bundle:
+        os.environ.setdefault("SSL_CERT_FILE", bundle)
+        os.environ.setdefault("REQUESTS_CA_BUNDLE", bundle)
 
 
 def _bootstrap_core() -> None:

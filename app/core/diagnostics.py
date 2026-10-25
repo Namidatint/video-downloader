@@ -114,7 +114,10 @@ def _ssl_check() -> CheckResult:
         with socket.create_connection(("pypi.org", 443), timeout=6) as sock:
             with context.wrap_socket(sock, server_hostname="pypi.org") as tls:
                 proto = tls.version() or "TLS"
-        return CheckResult("ssl", "HTTPS 证书链", PASS, f"证书校验正常（{proto}）")
+        detail = f"证书校验正常（{proto}）"
+        if os.environ.get("SSL_CERT_FILE"):
+            detail += f" · 根证书：{os.environ['SSL_CERT_FILE']}"
+        return CheckResult("ssl", "HTTPS 证书链", PASS, detail)
     except ssl.SSLCertVerificationError as exc:
         return CheckResult("ssl", "HTTPS 证书链", FAIL, f"证书校验失败：{exc}")
     except OSError as exc:

@@ -13,10 +13,11 @@ EXE_ICON = os.path.join(ROOT, "app", "resources", "icon.ico") if IS_WIN else Non
 ICNS = os.path.join(ROOT, "app", "resources", "icon.icns")
 
 datas = collect_data_files("imageio_ffmpeg")
+datas += collect_data_files("certifi")
 datas += [(os.path.join(ROOT, "app", "resources"), "app/resources")]
 
 hiddenimports = collect_submodules("yt_dlp")
-hiddenimports += ["mutagen", "Cryptodome"]
+hiddenimports += ["certifi", "mutagen", "Cryptodome"]
 
 a = Analysis(
     [os.path.join(ROOT, "app", "main.py")],

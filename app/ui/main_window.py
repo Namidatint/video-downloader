@@ -13,9 +13,9 @@ from PySide6.QtWidgets import (QApplication, QButtonGroup, QHBoxLayout, QLabel, 
 
 from app import __version__ as app_version
 from app.core import diagnostics, engine, paths
-from app.core.errors import (ACTION_COOKIES, ACTION_COPY, ACTION_DIAGNOSTICS, ACTION_FFMPEG,
-                             ACTION_LOGIN, ACTION_OPEN_DIR, ACTION_OPEN_URL, ACTION_PROXY,
-                             ACTION_RETRY, ACTION_SETTINGS, ACTION_UPDATE, Problem)
+from app.core.errors import (ACTION_COOKIES, ACTION_COPY, ACTION_DIAGNOSTICS, ACTION_DIRECT,
+                             ACTION_FFMPEG, ACTION_LOGIN, ACTION_OPEN_DIR, ACTION_OPEN_URL,
+                             ACTION_PROXY, ACTION_RETRY, ACTION_SETTINGS, ACTION_UPDATE, Problem)
 from app.core.history import HistoryEntry, HistoryStore
 from app.core.settings import Settings
 from app.core.tasks import CANCELLED, FAILED, QUEUED, DownloadTask

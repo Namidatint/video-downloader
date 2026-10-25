@@ -180,6 +180,14 @@ python -m app.main --cli "URL" -q 1080 -o ~/Downloads/GlowDL   # 无界面下载
 
 > 从 v1.0.0 起，「留空代理」不再等于直连：默认是「跟随系统」。要彻底绕过系统代理，必须显式选择「直连」。
 
+**现象**：`CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate`。
+
+**原因**：Python 运行时没有根证书库（python.org 的 macOS 安装包很常见），或代理软件做了 HTTPS 拦截，
+而它签发的根证书不在当前证书库里。
+
+**修复**：新版已内置 **certifi** 根证书；若仍失败，说明是代理 MITM，请在「设置 → 网络模式」改为
+直连，或把代理软件的根证书导入系统钥匙串后重启 App。自检第 9 项会显示当前使用的根证书路径。
+
 ## 七、工程结构
 
 ```text
