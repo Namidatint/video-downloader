@@ -126,9 +126,9 @@ def test_theme_switch(window, app):
 
     theme.apply_theme(app, "light")
     stylesheet = app.styleSheet()
-    assert "F0ECE3" in stylesheet
-    # The brief pins a square, flat, low-render world.
-    assert "border-radius" not in stylesheet
+    assert "#F3F3F3" in stylesheet
+    # Windows 10 look: subtle 4px corners, no gradients or glow.
+    assert "border-radius: 4px" in stylesheet
     assert "qlineargradient" not in stylesheet
     theme.apply_theme(app, "dark")
-    assert "0B0A09" in app.styleSheet()
+    assert "#202020" in app.styleSheet()

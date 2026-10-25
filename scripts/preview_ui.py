@@ -35,15 +35,15 @@ core_paths.app_data_dir = lambda: PREVIEW_HOME
 
 FAKE_INFO = {
     "id": "BV1GJ411x7h7",
-    "title": "4K 修复｜把喜欢的视频一键收藏到本地：yt-dlp 全流程演示（含字幕与封面）",
+    "title": "4K 修复｜把喜欢的视频一键收藏到本地：完整流程演示（字幕与封面）",
     "uploader": "拾光研究所",
     "duration": 754,
     "thumbnail": "",
     "extractor_key": "BiliBili",
     "webpage_url": "https://www.bilibili.com/video/BV1GJ411x7h7",
     "view_count": 1284000,
-    "description": "这期视频把解析、选画质、合并音轨、嵌入封面与字幕、断点续传、"
-                   "读取浏览器 Cookie 的完整流程走一遍，并演示出错时的问题诊所。",
+    "description": "从粘贴链接到下载完成：选择画质、合并音轨、嵌入封面与字幕、断点续传，"
+                   "以及出错后的诊断流程。",
     "formats": [
         {"format_id": "30280", "ext": "m4a", "vcodec": "none", "acodec": "mp4a.40.2",
          "tbr": 192, "filesize": 18_100_000},
@@ -89,7 +89,7 @@ def make_thumbnail(width: int = 640, height: int = 360) -> QPixmap:
     painter.setFont(font)
     painter.setPen(QColor(255, 255, 255, 190))
     painter.drawText(QRectF(40, height - 62, width - 80, 40), Qt.AlignLeft,
-                     "yt-dlp + GlowDL · 1080P / HEVC · 字幕 · 封面")
+                     "GlowDL · 1080P / HEVC · 字幕 · 封面")
     painter.end()
     return pixmap
 
@@ -98,7 +98,7 @@ def build_tasks(settings: Settings) -> list[DownloadTask]:
     now = time.time()
     tasks = [
         DownloadTask(url="https://www.bilibili.com/video/BV1GJ411x7h7",
-                     title="4K 修复｜把喜欢的视频一键收藏到本地：yt-dlp 全流程演示",
+                     title="4K 修复｜把喜欢的视频一键收藏到本地：完整流程演示",
                      site="哔哩哔哩", preset="1080", duration=754),
         DownloadTask(url="https://youtu.be/dQw4w9WgXcQ", title="Rick Astley - Never Gonna Give You Up",
                      site="YouTube", preset="audio-mp3", duration=213),
@@ -134,11 +134,11 @@ def main() -> None:
 
     app = QApplication([])
     settings = Settings.load()
-    settings.theme = "dark"
+    settings.theme = "light"
     settings.language = "zh"
     settings.cookies_browser = "edge"
-    settings.max_concurrent = 2
-    theme.apply_theme(app, "dark")
+    settings.max_concurrent = 50
+    theme.apply_theme(app, "light")
 
     window = mw_module.MainWindow(settings)
     window.resize(1240, 820)
@@ -165,7 +165,7 @@ def main() -> None:
 
     entries = [
         HistoryEntry(url="https://www.bilibili.com/video/BV1GJ411x7h7",
-                     title="4K 修复｜把喜欢的视频一键收藏到本地：yt-dlp 全流程演示",
+                     title="4K 修复｜把喜欢的视频一键收藏到本地：完整流程演示",
                      site="哔哩哔哩", preset="1080",
                      filepath="/Users/a1/Downloads/GlowDL/4K 修复.mp4",
                      filesize=293_000_000, duration=754, finished_at=time.time() - 300),
@@ -194,10 +194,11 @@ def main() -> None:
     checks = [
         diagnostics.CheckResult("python", "运行环境 Python", diagnostics.PASS, "Python 3.11.9（Windows）"),
         diagnostics.CheckResult("platform", "运行平台", diagnostics.PASS, "Windows 11 · GlowDL 1.0.0"),
-        diagnostics.CheckResult("yt_dlp", "下载内核 yt-dlp", diagnostics.PASS,
-                                "yt-dlp 2026.10.21（已内置，无需命令行）"),
-        diagnostics.CheckResult("ffmpeg", "音视频合并 ffmpeg", diagnostics.PASS,
-                                "GlowDL 内置 ffmpeg：…/ffmpeg.exe"),
+        diagnostics.CheckResult("yt_dlp", "解析组件", diagnostics.PASS,
+                                "已内置，无需安装"),
+        diagnostics.CheckResult("ffmpeg", "音视频合并", diagnostics.PASS, "已就绪"),
+        diagnostics.CheckResult("postprocess", "封面 / 元数据嵌入", diagnostics.PASS, "已就绪"),
+        diagnostics.CheckResult("douyin", "抖音原生解析", diagnostics.PASS, "使用本机 Edge 解析"),
         diagnostics.CheckResult("output_dir", "下载目录可写", diagnostics.PASS,
                                 "D:/Downloads/GlowDL"),
         diagnostics.CheckResult("disk", "磁盘剩余空间", diagnostics.PASS, "剩余 214.6 GB"),
@@ -221,11 +222,11 @@ def main() -> None:
     app.processEvents()
     window.grab().save(str(out_dir / "05-settings.png"))
 
-    # Light theme is a separate rebuild: icons are built against the active palette,
+    # Dark theme is a separate rebuild: icons are built against the active palette,
     # so switching theme in a live window is intentionally deferred to restart.
     window.close()
-    settings.theme = "light"
-    theme.apply_theme(app, "light")
+    settings.theme = "dark"
+    theme.apply_theme(app, "dark")
     window_light = mw_module.MainWindow(settings)
     window_light.resize(1240, 820)
     window_light.show()
@@ -234,7 +235,7 @@ def main() -> None:
     window_light.home_page.thumb.set_thumbnail(thumb)
     window_light.home_page.set_recent(entries)
     app.processEvents()
-    window_light.grab().save(str(out_dir / "06-home-light.png"))
+    window_light.grab().save(str(out_dir / "06-home-dark.png"))
     window_light.close()
 
     print("saved screenshots to", out_dir.resolve())

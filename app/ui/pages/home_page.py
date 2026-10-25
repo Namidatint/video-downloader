@@ -10,7 +10,6 @@ from PySide6.QtWidgets import (QCheckBox, QComboBox, QFileDialog, QFrame, QHBoxL
                                QLineEdit, QPlainTextEdit, QPushButton, QScrollArea,
                                QVBoxLayout, QWidget)
 
-from app.core import engine
 from app.core import formats as fmt
 from app.core import paths
 from app.core.errors import Problem
@@ -79,7 +78,7 @@ class HomePage(QWidget):
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         content = QWidget()
         root = QVBoxLayout(content)
-        root.setContentsMargins(30, 26, 30, 24)
+        root.setContentsMargins(36, 28, 36, 24)
         root.setSpacing(16)
         scroll.setWidget(content)
         outer.addWidget(scroll)
@@ -87,16 +86,14 @@ class HomePage(QWidget):
         heading = QHBoxLayout()
         box = QVBoxLayout()
         box.setSpacing(2)
-        title = QLabel("下载视频")
+        title = QLabel("下载")
         title.setObjectName("PageTitle")
-        subtitle = QLabel("粘贴链接，选好画质，剩下的交给 GlowDL。内置 yt-dlp 与 ffmpeg，无需命令行。")
+        subtitle = QLabel("粘贴链接，选择画质，下载到本地。")
         subtitle.setObjectName("PageSub")
         box.addWidget(title)
         box.addWidget(subtitle)
         heading.addLayout(box)
         heading.addStretch(1)
-        self.status_pill = widgets.StatusPill("就绪", "info")
-        heading.addWidget(self.status_pill, alignment=Qt.AlignBottom)
         root.addLayout(heading)
 
         # --- URL card ---------------------------------------------------
@@ -126,17 +123,10 @@ class HomePage(QWidget):
         hero_layout.addLayout(row)
 
         hint_row = QHBoxLayout()
-        hint_row.setSpacing(6)
-        hint = QLabel("支持")
+        hint_row.setSpacing(8)
+        hint = QLabel("支持 B 站、YouTube、抖音、小红书等站点")
         hint.setObjectName("Dim")
         hint_row.addWidget(hint)
-        for name in ("B站", "YouTube", "抖音", "小红书", "X", "微博", "Vimeo"):
-            chip = QLabel(name)
-            chip.setObjectName("Badge")
-            hint_row.addWidget(chip)
-        more = QLabel("等 1800+ 站点")
-        more.setObjectName("Dim")
-        hint_row.addWidget(more)
         hint_row.addStretch(1)
         self.playlist_check = QCheckBox("按播放列表下载")
         self.playlist_check.setChecked(self.settings.playlist)
@@ -175,56 +165,12 @@ class HomePage(QWidget):
         self.empty = widgets.EmptyState(
             "download",
             "还没有待下载的内容",
-            "把视频链接粘贴到上面的输入框，或直接把链接拖进窗口。\n"
-            "支持 B 站 1080P+/4K、YouTube、抖音、小红书等 1800+ 站点。",
+            "把视频链接粘贴到上面的输入框，或直接把链接拖进窗口。",
             action=("从剪贴板粘贴", self._paste),
         )
         root.addWidget(self.empty, 1)
 
-        # --- manifest strip --------------------------------------------
-        self.manifest = widgets.Card()
-        manifest_layout = QHBoxLayout(self.manifest)
-        manifest_layout.setContentsMargins(0, 0, 0, 0)
-        manifest_layout.setSpacing(0)
-        self.manifest_values: dict[str, QLabel] = {}
-        cells = (
-            ("kernel", "内核", 2),
-            ("path", "保存到", 4),
-            ("concurrency", "同时下载", 1),
-            ("sites", "站点覆盖", 2),
-        )
-        for index, (key, label, stretch) in enumerate(cells):
-            cell = QWidget()
-            cell_layout = QVBoxLayout(cell)
-            cell_layout.setContentsMargins(16, 11, 16, 11)
-            cell_layout.setSpacing(2)
-            caption = QLabel(label)
-            caption.setObjectName("Dim")
-            cell_layout.addWidget(caption)
-            if key == "path":
-                value = widgets.ElidedLabel(self.settings.download_dir)
-                value.setObjectName("MonoDim")
-            else:
-                value = QLabel("")
-                value.setObjectName("Mono" if key in ("kernel", "concurrency") else "Muted")
-                if key == "sites":
-                    value.setText("1800+ · 高清需登录 Cookie")
-            self.manifest_values[key] = value
-            cell_layout.addWidget(value)
-            manifest_layout.addWidget(cell, stretch)
-            if index < len(cells) - 1:
-                separator = QFrame()
-                separator.setFixedWidth(1)
-                separator.setStyleSheet(f"background: {theme.active['border']};")
-                manifest_layout.addWidget(separator)
         root.addStretch(1)
-        root.addWidget(self.manifest)
-        self.refresh_manifest()
-
-    def refresh_manifest(self) -> None:
-        self.manifest_values["kernel"].setText(f"yt-dlp {engine.ytdlp_version()}")
-        self.manifest_values["path"].setText(self.settings.download_dir)
-        self.manifest_values["concurrency"].setText(f"{self.settings.max_concurrent} 个")
 
     def _build_recent_card(self) -> QFrame:
         card = widgets.Card()
@@ -233,10 +179,10 @@ class HomePage(QWidget):
         layout.setSpacing(0)
         head = QWidget()
         head_layout = QHBoxLayout(head)
-        head_layout.setContentsMargins(16, 11, 12, 11)
+        head_layout.setContentsMargins(20, 14, 12, 12)
         head_layout.setSpacing(8)
         title = QLabel("最近完成")
-        title.setObjectName("SectionTitle")
+        title.setObjectName("SectionHeader")
         head_layout.addWidget(title)
         head_layout.addStretch(1)
         all_btn = QPushButton("全部历史")
@@ -265,12 +211,8 @@ class HomePage(QWidget):
         for index, entry in enumerate(entries):
             row = QWidget()
             row_layout = QHBoxLayout(row)
-            row_layout.setContentsMargins(16, 8, 12, 8)
+            row_layout.setContentsMargins(20, 10, 16, 10)
             row_layout.setSpacing(10)
-            mark = QLabel()
-            mark.setFixedSize(6, 6)
-            mark.setStyleSheet(f"background: {theme.active['success']};")
-            row_layout.addWidget(mark)
             title = widgets.ElidedLabel(entry.title or entry.url)
             title.setObjectName("CardTitle")
             row_layout.addWidget(title, 1)
@@ -441,9 +383,6 @@ class HomePage(QWidget):
     def _on_url_changed(self, text: str) -> None:
         text = text.strip()
         self.parse_btn.setEnabled(bool(text))
-        if not text:
-            self.status_pill.setText("就绪")
-            self.status_pill.set_kind("info")
 
     def _on_parse_clicked(self) -> None:
         url = self.url_input.text().strip()
@@ -460,8 +399,6 @@ class HomePage(QWidget):
             self.loading_label.setText("正在解析链接，请稍候…")
         self.parse_btn.setEnabled(False)
         self.parse_btn.setText("解析中…")
-        self.status_pill.setText("解析中")
-        self.status_pill.set_kind("info")
         self.parse_requested.emit(url, self.playlist_check.isChecked())
 
     def set_loading(self, loading: bool, message: str = "") -> None:
@@ -496,8 +433,7 @@ class HomePage(QWidget):
             )
             self.err_fixes.addWidget(button)
         self.err_fixes.addStretch(1)
-        self.status_pill.setText("解析失败")
-        self.status_pill.set_kind("error")
+
 
     def clear_error(self) -> None:
         self._error_problem = None
@@ -540,8 +476,7 @@ class HomePage(QWidget):
                 self.thumb.set_thumbnail(pixmap)
 
         self._populate_presets()
-        self.status_pill.setText("已解析")
-        self.status_pill.set_kind("ok")
+
         self.dir_label.setText(self.settings.download_dir)
         self.parse_btn.setEnabled(True)
         self.parse_btn.setText("解析")
@@ -620,8 +555,6 @@ class HomePage(QWidget):
         self.settings.last_preset = preset_key
         self.settings.save()
         self.download_requested.emit(task)
-        self.status_pill.setText("已加入队列")
-        self.status_pill.set_kind("ok")
         self.media_card.hide()
         self.empty.show()
         self.url_input.clear()

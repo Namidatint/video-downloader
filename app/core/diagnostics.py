@@ -52,11 +52,11 @@ def _ytdlp_check(settings: Settings) -> CheckResult:
 
         version = getattr(yt_dlp.version, "__version__", "unknown")
     except Exception as exc:  # pragma: no cover - broken install
-        return CheckResult("yt_dlp", "下载内核 yt-dlp", FAIL,
+        return CheckResult("yt_dlp", "解析组件", FAIL,
                            f"未安装或无法导入：{exc}",
-                           fix=Fix(ACTION_UPDATE, "安装/更新内核", "Install core"))
+                           fix=Fix(ACTION_UPDATE, "安装/更新组件", "Install component"))
     return CheckResult(
-        "yt_dlp", "下载内核 yt-dlp", PASS, f"yt-dlp {version}（已内置，无需命令行）",
+        "yt_dlp", "解析组件", PASS, "已内置，无需安装",
         extra={"version": version},
     )
 
@@ -64,24 +64,21 @@ def _ytdlp_check(settings: Settings) -> CheckResult:
 def _ffmpeg_check(settings: Settings) -> CheckResult:
     status = find_ffmpeg(settings.custom_ffmpeg)
     if status.available:
-        return CheckResult("ffmpeg", "音视频合并 ffmpeg", PASS,
-                           f"{status.detail}：{status.path}",
+        return CheckResult("ffmpeg", "音视频合并", PASS, "已就绪",
                            extra={"path": status.path})
-    return CheckResult("ffmpeg", "音视频合并 ffmpeg", FAIL,
-                       "未找到 ffmpeg，高清视频将无法合并音轨",
-                       fix=Fix(ACTION_FFMPEG, "自动修复 ffmpeg", "Fix ffmpeg"))
+    return CheckResult("ffmpeg", "音视频合并", FAIL,
+                       "音视频组件缺失，高清视频将无法合并音轨",
+                       fix=Fix(ACTION_FFMPEG, "自动修复组件", "Fix component"))
 
 
 def _postprocess_check() -> CheckResult:
     try:
-        import mutagen
+        import mutagen  # noqa: F401
 
-        version = getattr(mutagen, "version_string", "")
-        return CheckResult("postprocess", "封面 / 元数据嵌入", PASS,
-                           f"mutagen {version} 可用（无需 ffprobe）")
+        return CheckResult("postprocess", "封面 / 元数据嵌入", PASS, "已就绪")
     except Exception:
         return CheckResult("postprocess", "封面 / 元数据嵌入", WARN,
-                           "缺少 mutagen，MP4 封面嵌入会回退到 ffprobe（内置包未附带）")
+                           "封面嵌入组件缺失，将跳过封面嵌入")
 
 
 def _douyin_check() -> CheckResult:
@@ -130,10 +127,7 @@ def _ssl_check() -> CheckResult:
         with socket.create_connection(("pypi.org", 443), timeout=6) as sock:
             with context.wrap_socket(sock, server_hostname="pypi.org") as tls:
                 proto = tls.version() or "TLS"
-        detail = f"证书校验正常（{proto}）"
-        if os.environ.get("SSL_CERT_FILE"):
-            detail += f" · 根证书：{os.environ['SSL_CERT_FILE']}"
-        return CheckResult("ssl", "HTTPS 证书链", PASS, detail)
+        return CheckResult("ssl", "HTTPS 证书", PASS, f"证书校验正常（{proto}）")
     except ssl.SSLCertVerificationError as exc:
         return CheckResult("ssl", "HTTPS 证书链", FAIL, f"证书校验失败：{exc}")
     except OSError as exc:
@@ -267,10 +261,10 @@ def overall_status(checks: list[CheckResult]) -> str:
 def fix_target(action: str, lang: str = "zh") -> str:
     """Human description of what a fix will do (used in the clinic page)."""
     mapping = {
-        ACTION_FFMPEG: "重新定位/启用内置 ffmpeg",
+        ACTION_FFMPEG: "重新定位/启用音视频组件",
         ACTION_SETTINGS: "打开设置页调整下载目录",
         ACTION_PROXY: "打开设置页配置代理",
         ACTION_COOKIES: "打开设置页选择浏览器 Cookie",
-        ACTION_UPDATE: "检查并更新 yt-dlp 内核",
+        ACTION_UPDATE: "检查并更新解析组件",
     }
     return mapping.get(action, "")

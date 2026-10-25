@@ -54,7 +54,7 @@ PRESETS: tuple[Preset, ...] = (
            hint_zh="不转码，保留原始音质",
            hint_en="No re-encode, keeps the original audio quality"),
     Preset("custom", "自定义格式", "Custom format", "custom", None,
-           hint_zh="高级：直接填写 yt-dlp 格式表达式，例如 137+140",
+           hint_zh="高级：直接填写格式表达式，例如 137+140",
            hint_en="Advanced: raw yt-dlp format expression, e.g. 137+140"),
 )
 

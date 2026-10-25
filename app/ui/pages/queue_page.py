@@ -176,13 +176,13 @@ class QueuePage(QWidget):
 
     def _build_ui(self) -> None:
         root = QVBoxLayout(self)
-        root.setContentsMargins(30, 26, 30, 24)
+        root.setContentsMargins(36, 28, 36, 24)
         root.setSpacing(16)
 
         header = QHBoxLayout()
         box = QVBoxLayout()
         box.setSpacing(2)
-        title = QLabel("下载队列")
+        title = QLabel("队列")
         title.setObjectName("PageTitle")
         self.sub_label = QLabel("同时下载 2 个任务")
         self.sub_label.setObjectName("PageSub")

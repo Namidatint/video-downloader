@@ -66,13 +66,13 @@ class HistoryPage(QWidget):
 
     def _build_ui(self) -> None:
         root = QVBoxLayout(self)
-        root.setContentsMargins(30, 26, 30, 24)
+        root.setContentsMargins(36, 28, 36, 24)
         root.setSpacing(14)
 
         header = QHBoxLayout()
         box = QVBoxLayout()
         box.setSpacing(2)
-        title = QLabel("下载历史")
+        title = QLabel("历史")
         title.setObjectName("PageTitle")
         self.sub = QLabel("完成的任务会记录在这里")
         self.sub.setObjectName("PageSub")

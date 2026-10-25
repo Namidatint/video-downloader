@@ -43,9 +43,9 @@ class Settings:
     referer: str = ""
 
     # --- behaviour --------------------------------------------------------
-    max_concurrent: int = 2
+    max_concurrent: int = 50
     language: str = "zh"  # zh | en | auto
-    theme: str = "dark"  # dark | light
+    theme: str = "light"  # light | dark
     notify_on_finish: bool = True
     open_folder_when_done: bool = False
     clipboard_watch: bool = True
@@ -56,7 +56,7 @@ class Settings:
     max_history: int = 500
 
     # --- internal ---------------------------------------------------------
-    schema_version: int = 1
+    schema_version: int = 2
 
     # ------------------------------------------------------------------ io
     @classmethod
@@ -77,6 +77,10 @@ class Settings:
         known = {f.name for f in fields(cls)}
         clean = {k: v for k, v in data.items() if k in known}
         settings = cls(**clean)
+        if int(data.get("schema_version", 1) or 1) < 2:
+            # v2 redesign: Windows 10 Settings light theme by default.
+            settings.theme = "light"
+            settings.schema_version = 2
         settings.validate()
         return settings
 
@@ -113,10 +117,10 @@ class Settings:
         self.filename_template = (
             self.filename_template or "%(title)s [%(id)s].%(ext)s"
         ).strip()
-        if self.max_concurrent < 1:
-            self.max_concurrent = 1
-        if self.max_concurrent > 6:
-            self.max_concurrent = 6
+        if self.max_concurrent < 50:
+            self.max_concurrent = 50
+        if self.max_concurrent > 200:
+            self.max_concurrent = 200
         if self.retries < 0:
             self.retries = 0
         if self.retries > 50:
@@ -137,7 +141,7 @@ class Settings:
         if self.language not in ("auto", "zh", "en"):
             self.language = "auto"
         if self.theme not in ("dark", "light"):
-            self.theme = "dark"
+            self.theme = "light"
         if self.max_history < 10:
             self.max_history = 10
         proxy = (self.proxy or "").strip()

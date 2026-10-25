@@ -93,6 +93,8 @@ def main(argv: list[str] | None = None) -> int:
     app.setWindowIcon(icons.app_icon())
 
     settings = Settings.load()
+    # Persist migrations (theme/limit defaults) and normalise the config once.
+    settings.save()
     theme.apply_theme(app, settings.theme)
 
     window = MainWindow(settings)

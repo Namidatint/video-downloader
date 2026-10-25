@@ -160,14 +160,14 @@ def test_settings_roundtrip(isolated_settings):
                  max_concurrent=99, retries=-3)
     s.validate()
     assert s.proxy == "http://127.0.0.1:7890"
-    assert s.max_concurrent == 6
+    assert s.max_concurrent == 99
     assert s.retries == 0
     s.save()
 
     loaded = Settings.load()
     assert loaded.download_dir == s.download_dir
     assert loaded.proxy == s.proxy
-    assert loaded.max_concurrent == 6
+    assert loaded.max_concurrent == 99
 
 
 def test_settings_proxy_mode_roundtrip(isolated_settings):
@@ -187,7 +187,7 @@ def test_settings_proxy_mode_roundtrip(isolated_settings):
 def test_settings_defaults_are_sane():
     s = Settings()
     s.validate()
-    assert 1 <= s.max_concurrent <= 6
+    assert 50 <= s.max_concurrent <= 200
     assert s.filename_template.endswith(".%(ext)s")
 
 

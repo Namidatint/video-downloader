@@ -38,10 +38,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.version:
         from app import __version__
-        from app.core import engine
 
         print(f"GlowDL {__version__}")
-        print(f"yt-dlp {engine.ytdlp_version()}")
         print(f"Python {sys.version.split()[0]}")
         return 0
 

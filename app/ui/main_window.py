@@ -11,8 +11,7 @@ from PySide6.QtWidgets import (QApplication, QButtonGroup, QHBoxLayout, QLabel, 
                                QMessageBox, QPushButton, QStackedWidget, QSystemTrayIcon,
                                QVBoxLayout, QWidget)
 
-from app import __version__ as app_version
-from app.core import diagnostics, engine, paths
+from app.core import diagnostics, paths
 from app.core.errors import (ACTION_COOKIES, ACTION_COPY, ACTION_DIAGNOSTICS, ACTION_DIRECT,
                              ACTION_FFMPEG, ACTION_LOGIN, ACTION_OPEN_DIR, ACTION_OPEN_URL,
                              ACTION_PROXY, ACTION_RETRY, ACTION_SETTINGS, ACTION_UPDATE, Problem)
@@ -86,29 +85,24 @@ class MainWindow(QMainWindow):
     def _build_sidebar(self) -> QWidget:
         sidebar = QWidget()
         sidebar.setObjectName("Sidebar")
-        sidebar.setFixedWidth(226)
+        sidebar.setFixedWidth(260)
         layout = QVBoxLayout(sidebar)
-        layout.setContentsMargins(16, 20, 16, 16)
-        layout.setSpacing(6)
+        layout.setContentsMargins(0, 0, 0, 8)
+        layout.setSpacing(0)
 
-        brand = QHBoxLayout()
-        brand.setSpacing(10)
-        logo = QLabel()
-        logo.setPixmap(icons.app_pixmap(36))
-        logo.setFixedSize(38, 38)
-        brand.addWidget(logo)
-        brand_text = QVBoxLayout()
-        brand_text.setSpacing(0)
-        name = QLabel("GlowDL")
-        name.setObjectName("BrandName")
-        sub = QLabel("拾光下载器")
-        sub.setObjectName("BrandSub")
-        brand_text.addWidget(name)
-        brand_text.addWidget(sub)
-        brand.addLayout(brand_text)
-        brand.addStretch(1)
-        layout.addLayout(brand)
-        layout.addSpacing(18)
+        header = QWidget()
+        header_layout = QHBoxLayout(header)
+        header_layout.setContentsMargins(12, 10, 12, 10)
+        header_layout.setSpacing(10)
+        hamburger = QLabel()
+        hamburger.setPixmap(icons.pixmap("list", theme.active["text"], 20))
+        hamburger.setFixedSize(22, 22)
+        header_layout.addWidget(hamburger)
+        title = QLabel("拾光下载器")
+        title.setObjectName("SidebarTitle")
+        header_layout.addWidget(title, 1)
+        layout.addWidget(header)
+        layout.addSpacing(8)
 
         self.nav_group = QButtonGroup(self)
         self.nav_group.setExclusive(True)
@@ -118,14 +112,14 @@ class MainWindow(QMainWindow):
             ("download", "下载"),
             ("list", "队列"),
             ("clock", "历史"),
-            ("pulse", "问题诊所"),
+            ("pulse", "诊断"),
             ("gear", "设置"),
         )):
             button = QPushButton("  " + label)
             button.setObjectName("NavButton")
             button.setCheckable(True)
             button.setCursor(Qt.PointingHandCursor)
-            button.setIcon(icons.icon(icon_name, theme.active["muted"], 18))
+            button.setIcon(icons.icon(icon_name, theme.active["text_soft"], 18))
             button.setIconSize(QSize(18, 18))
             button.setMinimumHeight(40)
             button.clicked.connect(lambda _=False, i=index: self._go(i))
@@ -136,22 +130,6 @@ class MainWindow(QMainWindow):
         self._refresh_nav_icons()
 
         layout.addStretch(1)
-
-        self.core_label = QLabel(f"yt-dlp {engine.ytdlp_version()}")
-        self.core_label.setObjectName("Dim")
-        self.core_label.setWordWrap(True)
-        layout.addWidget(self.core_label)
-
-        self.selfcheck_btn = QPushButton("运行环境自检")
-        self.selfcheck_btn.setObjectName("NavButton")
-        self.selfcheck_btn.setCursor(Qt.PointingHandCursor)
-        self.selfcheck_btn.setIcon(icons.icon("pulse", theme.active["muted"], 16))
-        self.selfcheck_btn.clicked.connect(self._selfcheck_clicked)
-        layout.addWidget(self.selfcheck_btn)
-
-        version = QLabel(f"v{app_version} · Windows / macOS")
-        version.setObjectName("Dim")
-        layout.addWidget(version)
         return sidebar
 
     def _connect_signals(self) -> None:
@@ -190,10 +168,9 @@ class MainWindow(QMainWindow):
         current = self.stack.currentIndex() if hasattr(self, "stack") else 0
         for index, button in enumerate(self.nav_buttons):
             name = self._nav_icon_names[index]
-            color = theme.active["accent_text"] if index == current else theme.active["muted"]
+            color = theme.active["accent"] if index == current else theme.active["text_soft"]
             button.setIcon(icons.icon(name, color, 18))
-        if hasattr(self, "selfcheck_btn"):
-            self.selfcheck_btn.setIcon(icons.icon("pulse", theme.active["muted"], 16))
+
 
     def _go(self, index: int) -> None:
         if 0 <= index < self.stack.count():
@@ -482,10 +459,6 @@ class MainWindow(QMainWindow):
         self._refresh_history()
 
     # ---------------------------------------------------------- diagnostics
-    def _selfcheck_clicked(self) -> None:
-        self._go(3)
-        self._run_diagnostics()
-
     def _run_diagnostics(self, silent: bool = False) -> None:
         if self._diag_worker is not None and self._diag_worker.isRunning():
             return
@@ -500,14 +473,7 @@ class MainWindow(QMainWindow):
         self._checks = checks
         self.clinic_page.set_running(False)
         self.clinic_page.set_checks(checks)
-        overall = diagnostics.overall_status(checks)
-        if overall == diagnostics.PASS:
-            self.selfcheck_btn.setText("环境正常")
-        elif overall == diagnostics.WARN:
-            self.selfcheck_btn.setText("自检 · 有建议")
-        else:
-            fails = sum(1 for c in checks if c.status == diagnostics.FAIL)
-            self.selfcheck_btn.setText(f"自检 · {fails} 项待修复")
+        # The diagnostics page carries its own status banner and rerun button.
 
     def _check_updates_quietly(self) -> None:
         worker = VersionCheckWorker(self)
@@ -515,25 +481,23 @@ class MainWindow(QMainWindow):
         worker.finished.connect(worker.deleteLater)
         self._version_worker = worker
         worker.start()
-        self.settings_page.set_core_status("已内置最新版内核；可随时手动检查更新", "ok",
-                                           engine.ytdlp_version())
+        self.settings_page.set_core_status("已是最新版本", "ok")
 
     def _on_version_checked(self, available: bool, current: str, latest: str) -> None:
         if available and latest:
             self.settings_page.set_core_status(
-                f"发现新版本 {latest}（当前 {current}），建议更新以获得最新站点支持。",
+                f"发现新版本 {latest}，建议更新以获得新站点支持。",
                 "warn", current)
-            self.toast.show_message(f"yt-dlp {latest} 可用，可在设置页更新", "warn")
+            self.toast.show_message("发现组件更新，可在设置页安装", "warn")
         else:
-            self.settings_page.set_core_status(
-                f"已是最新版本（{current}）。", "ok", current)
+            self.settings_page.set_core_status("已是最新版本", "ok")
 
     def _run_update(self) -> None:
         if self._update_worker is not None and self._update_worker.isRunning():
             return
         self.settings_page.update_btn.setEnabled(False)
         self.settings_page.update_btn.setText("更新中…")
-        self.settings_page.set_core_status("正在检查并下载最新内核…", "info")
+        self.settings_page.set_core_status("正在检查并下载更新…", "info")
         worker = UpdateWorker(self)
         worker.message.connect(lambda text: self.settings_page.set_core_status(text, "info"))
         worker.ok.connect(self._on_update_ok)
@@ -545,14 +509,14 @@ class MainWindow(QMainWindow):
     def _on_update_ok(self, version: str) -> None:
         self.settings_page.update_btn.setEnabled(True)
         self.settings_page.update_btn.setText("检查更新")
-        self.settings_page.set_core_status(f"内核已更新到 {version}，重启应用后生效。", "ok", version)
-        self._notify("内核已更新", f"yt-dlp {version}，重启后生效", "ok")
+        self.settings_page.set_core_status("组件已更新，重启应用后生效。", "ok")
+        self._notify("组件已更新", "重启应用后生效", "ok")
 
     def _on_update_failed(self, message: str) -> None:
         self.settings_page.update_btn.setEnabled(True)
         self.settings_page.update_btn.setText("检查更新")
         self.settings_page.set_core_status(f"更新失败：{message}", "error")
-        self.toast.show_message("内核更新失败，可稍后重试", "error")
+        self.toast.show_message("更新失败，可稍后重试", "error")
 
     # --------------------------------------------------------------- fixes
     def _handle_fix(self, action: str, problem: Problem | None, source_url: str = "") -> None:
@@ -590,7 +554,7 @@ class MainWindow(QMainWindow):
         elif action == ACTION_FFMPEG:
             self._go(3)
             self._run_diagnostics()
-            self.toast.show_message("已重新检测 ffmpeg；内置版本通常无需手动安装", "info")
+            self.toast.show_message("已重新检测音视频组件", "info")
         elif action == ACTION_UPDATE:
             self._go(4)
             self._run_update()
@@ -610,12 +574,9 @@ class MainWindow(QMainWindow):
         if self.settings.theme != self._applied_theme:
             self._applied_theme = self.settings.theme
             self.toast.show_message("主题已保存，重启应用后生效", "info")
-        self.home_page.refresh_manifest()
         self.clinic_page.reload_handbook()
         self._refresh_history()
         self._refresh_queue_state()
-        self.settings_page.core_version.setText(f"yt-dlp {engine.ytdlp_version()}")
-        self.core_label.setText(f"yt-dlp {engine.ytdlp_version()}")
         self._start_pending()
 
     # --------------------------------------------------------------- drag

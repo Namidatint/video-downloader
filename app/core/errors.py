@@ -97,13 +97,13 @@ RULES: tuple[_Rule, ...] = (
         r"ffmpeg (?:is )?not (?:installed|found)|ffprobe.*not found|Postprocessing: ffmpeg|"
         r"requested merging of multiple formats but ffmpeg is not installed|"
         r"ffmpeg.*(?:unable|missing)|You have requested merging",
-        "缺少 ffmpeg，无法合并音视频",
-        "高清视频的画面和声音是分开的两条流，需要 ffmpeg 合并。GlowDL 自带 ffmpeg，"
-        "通常一键修复即可；若你手动指定过 ffmpeg 路径，请检查该路径是否有效。",
-        "ffmpeg is missing",
-        "High-quality video and audio are separate streams and must be merged by ffmpeg. "
-        "GlowDL bundles ffmpeg — run the fix; if you set a custom path, verify it.",
-        fixes=(Fix(ACTION_FFMPEG, "自动修复 ffmpeg", "Fix ffmpeg automatically"),
+        "缺少音视频组件",
+        "高清视频的画面和声音是分开的两条流，需要音视频组件合并。应用已内置该组件，"
+        "通常一键修复即可。",
+        "Audio/video component is missing",
+        "High-quality video and audio are separate streams that must be merged. The app "
+        "bundles the component; run the fix.",
+        fixes=(Fix(ACTION_FFMPEG, "自动修复组件", "Fix component"),
                Fix(ACTION_DIAGNOSTICS, "运行环境自检", "Run diagnostics")),
     ),
     _rule(
@@ -139,11 +139,11 @@ RULES: tuple[_Rule, ...] = (
         r"Fresh cookies \(not necessarily logged in\) are needed|"
         r"抖音.*(?:Cookie|登录)",
         "抖音需要浏览器验证 Cookie",
-        "yt-dlp 的抖音解析器需要带签名的浏览器 Cookie。GlowDL 已改为启动本机 Edge/Chrome 直接读取页面数据；"
-        "若仍失败，请确认浏览器能正常打开该视频，或更新内核后重试。",
+        "抖音解析需要带签名的浏览器数据。应用会启动本机 Edge/Chrome 直接读取页面；"
+        "若仍失败，请确认浏览器能正常打开该视频，或更新组件后重试。",
         "Douyin needs fresh browser cookies",
-        "yt-dlp's Douyin extractor needs signed browser cookies. GlowDL resolves Douyin through "
-        "your local Edge/Chrome instead; make sure the video plays in that browser and retry.",
+        "Douyin needs signed browser data. The app resolves it through your local "
+        "Edge/Chrome; make sure the video plays in that browser and retry.",
         fixes=(Fix(ACTION_COOKIES, "读取浏览器 Cookie", "Use browser cookies"),
                Fix(ACTION_OPEN_URL, "在浏览器中打开", "Open in browser"),
                Fix(ACTION_RETRY, "重试", "Retry")),
@@ -354,22 +354,22 @@ RULES: tuple[_Rule, ...] = (
         r"Postprocessing:|Postprocessor|Unable to convert|Conversion failed|"
         r"Error opening input|Invalid data found when processing input",
         "下载完成但后处理失败",
-        "通常是源文件损坏或 ffmpeg 无法识别封装格式。可在设置里关闭“合并为 MP4/嵌入封面”等选项后重试。",
+        "通常是源文件损坏或封装格式不受支持。可在设置里关闭“合并为 MP4 / 嵌入封面”等选项后重试。",
         "Post-processing failed",
         "Usually a broken source or an unsupported container. Turn off MP4 merge/thumbnail "
         "embedding in Settings and retry.",
         fixes=(Fix(ACTION_SETTINGS, "调整后处理选项", "Adjust post-processing"),
-               Fix(ACTION_FFMPEG, "修复 ffmpeg", "Fix ffmpeg")),
+               Fix(ACTION_FFMPEG, "修复组件", "Fix ffmpeg")),
     ),
     _rule(
         "extractor_broken",
         r"Unable to extract|extractor.*(?:broken|failed)|"
         r"Failed to parse JSON|KeyError|IndexError|no such option",
         "解析器需要更新",
-        "站点改版后旧版 yt-dlp 会解析失败。点击「更新内核」升级到最新版通常即可解决。",
+        "站点改版后旧版解析组件会失效。点击「更新组件」升级到最新版通常即可解决。",
         "Extractor needs an update",
-        "The site changed and this yt-dlp version can no longer parse it. Update the core.",
-        fixes=(Fix(ACTION_UPDATE, "更新内核", "Update core"),
+        "The site changed and this version can no longer parse it. Update the component.",
+        fixes=(Fix(ACTION_UPDATE, "更新组件", "Update component"),
                Fix(ACTION_RETRY, "重试", "Retry")),
     ),
 )
@@ -377,7 +377,7 @@ RULES: tuple[_Rule, ...] = (
 GENERIC = Problem(
     code="generic",
     title="下载失败",
-    detail="这是一个未归类的错误。可展开“原始信息”查看细节，或运行「问题诊所」自检后重试。",
+    detail="这是一个未归类的错误。可展开“原始信息”查看细节，或运行「诊断」后重试。",
     fixes=(Fix(ACTION_RETRY, "重试", "Retry"),
            Fix(ACTION_DIAGNOSTICS, "运行自检", "Run diagnostics")),
 )

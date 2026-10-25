@@ -135,15 +135,15 @@ class ClinicPage(QWidget):
     # ---------------------------------------------------------------- UI
     def _build_ui(self) -> None:
         root = QVBoxLayout(self)
-        root.setContentsMargins(30, 26, 30, 24)
+        root.setContentsMargins(36, 28, 36, 24)
         root.setSpacing(14)
 
         header = QHBoxLayout()
         box = QVBoxLayout()
         box.setSpacing(2)
-        title = QLabel("问题诊所")
+        title = QLabel("诊断")
         title.setObjectName("PageTitle")
-        subtitle = QLabel("环境自检 + 报错百科：先找出病因，再一键修复。")
+        subtitle = QLabel("检查运行环境，定位并修复常见问题。")
         subtitle.setObjectName("PageSub")
         box.addWidget(title)
         box.addWidget(subtitle)
@@ -165,7 +165,7 @@ class ClinicPage(QWidget):
         text_box.setSpacing(3)
         self.banner_title = QLabel("正在检查运行环境…")
         self.banner_title.setObjectName("CardTitle")
-        self.banner_detail = QLabel("检查 ffmpeg、网络、Cookie、磁盘空间与证书链。")
+        self.banner_detail = QLabel("检查网络、登录状态、存储空间与证书。")
         self.banner_detail.setObjectName("Muted")
         self.banner_detail.setWordWrap(True)
         text_box.addWidget(self.banner_title)
@@ -200,17 +200,17 @@ class ClinicPage(QWidget):
         handbook_layout.setContentsMargins(18, 14, 18, 14)
         handbook_layout.setSpacing(10)
         top = QHBoxLayout()
-        handbook_title = QLabel("报错百科")
+        handbook_title = QLabel("错误说明")
         handbook_title.setObjectName("SectionTitle")
         top.addWidget(handbook_title)
         top.addStretch(1)
         self.search = QLineEdit()
-        self.search.setPlaceholderText("搜索报错，例如 403 / cookie / ffmpeg")
+        self.search.setPlaceholderText("搜索错误，例如 403 / 登录")
         self.search.setFixedWidth(280)
         self.search.textChanged.connect(self._on_search)
         top.addWidget(self.search)
         handbook_layout.addLayout(top)
-        hint = QLabel("点击条目展开原因与修复动作；这里的每一条都对应 GlowDL 会自动识别并翻译的错误。")
+        hint = QLabel("点击条目展开原因与修复动作。")
         hint.setObjectName("Dim")
         hint.setWordWrap(True)
         handbook_layout.addWidget(hint)
@@ -253,10 +253,10 @@ class ClinicPage(QWidget):
         self.rerun_btn.setText("检查中…" if running else "重新自检")
         if running:
             self.banner_title.setText("正在检查运行环境…")
-            self.banner_detail.setText("检查 ffmpeg、网络、Cookie、磁盘空间与证书链。")
+            self.banner_detail.setText("检查网络、登录状态、存储空间与证书。")
             self.banner_pill.setText("检查中")
             self.banner_pill.set_kind("info")
-            self._set_check_placeholder("正在检测 内核 / ffmpeg / 目录 / 网络 / 证书 / Cookie …")
+            self._set_check_placeholder("正在检查组件、目录、网络与登录状态…")
 
     def _set_check_placeholder(self, text: str) -> None:
         while self.checks_box.count():
@@ -289,7 +289,7 @@ class ClinicPage(QWidget):
         if overall == diagnostics.PASS:
             self.banner_icon.setPixmap(icons.pixmap("check", theme.active["success"], 28))
             self.banner_title.setText("一切正常，可以开始下载")
-            self.banner_detail.setText("内核、ffmpeg、网络与证书链均已就绪。")
+            self.banner_detail.setText("所有检查均已通过。")
             self.banner_pill.setText("健康")
             self.banner_pill.set_kind("ok")
         elif overall == diagnostics.WARN:
