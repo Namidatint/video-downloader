@@ -135,6 +135,20 @@ RULES: tuple[_Rule, ...] = (
                Fix(ACTION_RETRY, "重试", "Retry")),
     ),
     _rule(
+        "douyin_cookie",
+        r"Fresh cookies \(not necessarily logged in\) are needed|"
+        r"抖音.*(?:Cookie|登录)",
+        "抖音需要浏览器验证 Cookie",
+        "yt-dlp 的抖音解析器需要带签名的浏览器 Cookie。GlowDL 已改为启动本机 Edge/Chrome 直接读取页面数据；"
+        "若仍失败，请确认浏览器能正常打开该视频，或更新内核后重试。",
+        "Douyin needs fresh browser cookies",
+        "yt-dlp's Douyin extractor needs signed browser cookies. GlowDL resolves Douyin through "
+        "your local Edge/Chrome instead; make sure the video plays in that browser and retry.",
+        fixes=(Fix(ACTION_COOKIES, "读取浏览器 Cookie", "Use browser cookies"),
+               Fix(ACTION_OPEN_URL, "在浏览器中打开", "Open in browser"),
+               Fix(ACTION_RETRY, "重试", "Retry")),
+    ),
+    _rule(
         "drm",
         r"DRM|digital rights management|protected by (?:DRM|widevine)|widevine",
         "该视频受 DRM 版权保护",

@@ -17,7 +17,7 @@ datas += collect_data_files("certifi")
 datas += [(os.path.join(ROOT, "app", "resources"), "app/resources")]
 
 hiddenimports = collect_submodules("yt_dlp")
-hiddenimports += ["certifi", "mutagen", "Cryptodome"]
+hiddenimports += ["certifi", "mutagen", "Cryptodome", "websocket"]
 
 a = Analysis(
     [os.path.join(ROOT, "app", "main.py")],

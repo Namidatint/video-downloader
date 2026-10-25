@@ -16,6 +16,7 @@ dependencies = [
     "yt-dlp>=2025.1.15",
     "imageio-ffmpeg>=0.4.9",
     "mutagen>=1.47",
+    "websocket-client>=1.8",
     "pycryptodomex>=3.20",
     "certifi",
 ]

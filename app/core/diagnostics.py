@@ -84,6 +84,22 @@ def _postprocess_check() -> CheckResult:
                            "缺少 mutagen，MP4 封面嵌入会回退到 ffprobe（内置包未附带）")
 
 
+def _douyin_check() -> CheckResult:
+    try:
+        from app.core import douyin
+
+        browser = douyin.find_browser()
+    except Exception as exc:  # noqa: BLE001
+        return CheckResult("douyin", "抖音原生解析", WARN, f"检查失败：{exc}")
+    if browser:
+        from pathlib import Path as _Path
+
+        return CheckResult("douyin", "抖音原生解析", PASS,
+                           f"使用本机 {_Path(browser[0]).stem} 解析（无需第三方接口）")
+    return CheckResult("douyin", "抖音原生解析", WARN,
+                       "未找到 Edge/Chrome；安装其中一个浏览器即可解析抖音链接")
+
+
 def _output_dir_check(settings: Settings) -> CheckResult:
     try:
         folder = settings.output_dir
@@ -228,6 +244,7 @@ def run_all(settings: Settings) -> list[CheckResult]:
         lambda: _ytdlp_check(settings),
         lambda: _ffmpeg_check(settings),
         lambda: _postprocess_check(),
+        lambda: _douyin_check(),
         lambda: _output_dir_check(settings),
         lambda: _disk_check(settings),
         lambda: _proxy_check(settings),

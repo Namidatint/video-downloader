@@ -454,7 +454,10 @@ class HomePage(QWidget):
         self.media_card.hide()
         self.empty.hide()
         self.loading_row.show()
-        self.loading_label.setText("正在解析链接，请稍候…")
+        if "douyin.com" in url:
+            self.loading_label.setText("抖音链接需要启动本机浏览器解析，约 10 秒，请稍候…")
+        else:
+            self.loading_label.setText("正在解析链接，请稍候…")
         self.parse_btn.setEnabled(False)
         self.parse_btn.setText("解析中…")
         self.status_pill.setText("解析中")

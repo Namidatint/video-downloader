@@ -67,6 +67,8 @@ macOS `.app` 已在本机启动验证：解析本地 HTTP 视频 → 入队下�
 **下载**
 - 粘贴链接即解析；支持拖拽、剪贴板、播放列表整体入队。
 - 画质预设：最佳 / 4K / 2K / 1080P / 720P / 480P / 仅音频 MP3 / 仅音频 M4A / 自定义 format。
+- **抖音原生解析**：本机 Edge/Chrome 通过 DevTools 协议读取签名数据，不经过任何第三方解析接口；
+  首次解析约 10 秒，可拿到无水印播放地址。
 - 「全部格式」表格列出每一条流的编码、帧率、体积与 format id，双击复制。
 - 并发队列（1–6 个同时下载）、实时进度 / 速度 / 剩余时间、暂停、重试、断点续传。
 - 后处理开关：合并 MP4、嵌入封面、写入元数据、下载并嵌入字幕、SponsorBlock 跳赞助。
@@ -180,6 +182,13 @@ python -m app.main --cli "URL" -q 1080 -o ~/Downloads/GlowDL   # 无界面下载
 
 > 从 v1.0.0 起，「留空代理」不再等于直连：默认是「跟随系统」。要彻底绕过系统代理，必须显式选择「直连」。
 
+**现象**：抖音链接报 `Fresh cookies (not necessarily logged in) are needed` 或「暂不支持这个链接」。
+
+**原因**：yt-dlp 的抖音解析器需要签名 Cookie，官方实现目前仍标注 TODO。
+
+**修复**：新版已改为 **调用本机 Edge/Chrome 无头解析**：首次解析约 10 秒，直接拿无水印地址，
+不经过任何第三方接口。请确认机器上装有 Edge 或 Chrome；自检第 11 项会显示检测结果。
+
 **现象**：`CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate`。
 
 **原因**：Python 运行时没有根证书库（python.org 的 macOS 安装包很常见），或代理软件做了 HTTPS 拦截，
@@ -214,7 +223,7 @@ glowdl/
 │       ├── widgets.py         # 卡片/缩略图/Toast/图片异步加载
 │       ├── workers.py         # QThread 工作线程
 │       └── pages/             # 下载 / 队列 / 历史 / 问题诊所 / 设置
-├── tests/                     # pytest：核心 + 本地 HTTP 真下载，共 64 项
+├── tests/                     # pytest：核心 + 本地 HTTP 真下载 + 抖音解析，共 70 项
 ├── scripts/
 │   ├── build_macos.sh         # .app + .dmg
 │   ├── build_windows.ps1      # .exe + zip
@@ -245,7 +254,7 @@ python -m app.main --diagnose
 
 当前结果：
 
-- **64 项测试全部通过**（单元 + 本地集成 + GUI 冒烟）。
+- **70 项测试全部通过**（单元 + 本地集成 + GUI 冒烟）。
 - 本地 HTTP 集成测试会用 ffmpeg 生成一段真实 mp4，经 `engine.download()` 下载、转 MP3、并验证取消后
   `.part` 文件保留。
 - `scripts/preview_ui.py` 可在无网络、无窗口环境下重新生成 `docs/screenshots/` 里的全部界面截图。
@@ -284,7 +293,7 @@ GitHub Actions 已配置双平台矩阵，推送 tag 即可在 Actions 里下载
 | 3 | 设置 → 登录态 Cookie → 选择已登录浏览器 → 重试 1080P | 原本 480P 的视频可下 1080P+ |
 | 4 | 问题诊所 → 重新自检 | 10 项检查 6 秒内出结果；有问题的项带「修复」 |
 | 5 | 断网状态下粘贴链接 | 出现中文错误卡片 + 重试/配置代理按钮，而不是 traceback |
-| 6 | `pytest -q` | 64 passed |
+| 6 | `pytest -q` | 70 passed |
 | 7 | `bash scripts/build_macos.sh` | 重新产出 `.app` 与 `.dmg` |
 
 **本仓库已在本机验证**：macOS 15 / Python 3.10.11 上完成打包，打包版启动、解析本地 HTTP 视频、

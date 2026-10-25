@@ -12,9 +12,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
 
+from app.core import douyin
 from app.core import formats as formats_mod
 from app.core import paths
-from app.core.errors import Problem, translate
+from app.core.errors import ACTION_OPEN_URL, ACTION_RETRY, Fix, Problem, translate
 from app.core.ffmpeg_tools import ffmpeg_location
 from app.core.settings import Settings
 
@@ -163,6 +164,18 @@ def _base_options(settings: Settings, logger: _Logger) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # probing
 # ---------------------------------------------------------------------------
+def _douyin_problem(exc: Exception) -> Problem:
+    return Problem(
+        code="douyin",
+        title="抖音解析失败",
+        detail=str(exc) or "抖音页面没有返回可下载的视频数据。",
+        fixes=(
+            Fix(ACTION_OPEN_URL, "在浏览器中打开", "Open in browser", url=""),
+            Fix(ACTION_RETRY, "重试", "Retry"),
+        ),
+    )
+
+
 def probe(url: str, settings: Settings, playlist: bool = False,
           log: LogCallback | None = None) -> dict[str, Any]:
     """Fetch metadata without downloading. Returns yt-dlp's info dict."""
@@ -171,6 +184,18 @@ def probe(url: str, settings: Settings, playlist: bool = False,
     url = (url or "").strip()
     if not url:
         raise DownloadError(translate("Unsupported URL: empty"))
+
+    if douyin.is_douyin_url(url):
+        # yt-dlp's Douyin extractor currently requires signed cookies and fails;
+        # resolve through the user's local Edge/Chrome instead.
+        try:
+            resolved = douyin.resolve(url)
+        except douyin.DouyinError as exc:
+            raise DownloadError(_douyin_problem(exc))
+        except Exception as exc:  # noqa: BLE001
+            raise DownloadError(_douyin_problem(exc))
+        return douyin.to_info_dict(resolved)
+
     logger = _Logger(log)
     opts = _base_options(settings, logger)
     opts.update({
@@ -307,6 +332,32 @@ def download(
     import yt_dlp
 
     started = time.time()
+
+    if douyin.is_douyin_url(url):
+        try:
+            filepath, resolved = douyin.download(
+                url, settings,
+                preset_key=preset_key,
+                progress=progress,
+                cancel_event=cancel_event,
+                outdir=outdir,
+            )
+        except douyin.DouyinCancelled:
+            raise DownloadCancelled() from None
+        except douyin.DouyinError as exc:
+            raise DownloadError(_douyin_problem(exc)) from exc
+        info = douyin.to_info_dict(resolved)
+        return DownloadResult(
+            url=url,
+            title=resolved.title,
+            filepaths=[str(filepath)],
+            duration=resolved.duration,
+            site="抖音",
+            preset=preset_key,
+            elapsed=time.time() - started,
+            info=info,
+        )
+
     opts = build_download_options(
         settings, preset_key, custom_format, outdir, progress, log, cancel_event, playlist
     )
