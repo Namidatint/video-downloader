@@ -497,11 +497,11 @@ class HomePage(QWidget):
             count = int((self._info or {}).get("image_count") or 0)
             live = bool((self._info or {}).get("live_photo"))
             self.preset_combo.addItem(
-                f"实况 · {count} 张（打包 ZIP）" if live else f"图文 · {count} 张（打包 ZIP）",
+                f"实况 · {count} 张（iPhone + Android）" if live else f"图文 · {count} 张（打包 ZIP）",
                 "best")
             self.formats_btn.hide()
             self.preset_hint.setText(
-                "实况照片会打包静态图 + 动态视频（ZIP）。" if live
+                "实况包内含 iPhone 的 JPG+MOV，以及 Android 的单张动态照片。" if live
                 else "图文作品会打包成一个 ZIP，内含原始图片。")
             self.preset_combo.blockSignals(False)
             return

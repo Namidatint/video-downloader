@@ -17,7 +17,7 @@ datas += collect_data_files("certifi")
 datas += [(os.path.join(ROOT, "app", "resources"), "app/resources")]
 
 hiddenimports = collect_submodules("yt_dlp")
-hiddenimports += ["certifi", "mutagen", "Cryptodome", "websocket"]
+hiddenimports += ["certifi", "mutagen", "Cryptodome", "websocket", "piexif"]
 
 a = Analysis(
     [os.path.join(ROOT, "app", "main.py")],
@@ -71,8 +71,8 @@ if IS_MAC:
         info_plist={
             "CFBundleDisplayName": "视频下载器",
             "CFBundleName": "视频下载器",
-            "CFBundleShortVersionString": "1.0.2",
-            "CFBundleVersion": "1.0.2",
+            "CFBundleShortVersionString": "1.0.3",
+            "CFBundleVersion": "1.0.3",
             "NSHighResolutionCapable": True,
             "LSMinimumSystemVersion": "11.0",
             "NSHumanReadableCopyright": "by NamidaTint · 仅用于下载你有权保存的内容",

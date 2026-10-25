@@ -880,20 +880,33 @@ def _download_images(info: DouyinInfo, settings, progress, cancel_event,
             item = work / f"{index + 1:02d}{suffix}"
             _download_http(url, item, None, cancel_event)
             files.append(item)
+        motion_file: Path | None = None
         if info.motion:
-            try:
-                motion_file = work / "motion.mp4"
-                _download_http(info.motion, motion_file, None, cancel_event)
-                files.append(motion_file)
-            except DouyinCancelled:
-                raise
-            except Exception:
-                pass  # keep the still image if the motion clip is unavailable
+            motion_file = work / "motion.mp4"
+            _download_http(info.motion, motion_file, None, cancel_event)
+
         import zipfile
 
-        with zipfile.ZipFile(target, "w", compression=zipfile.ZIP_STORED) as archive:
-            for index, item in enumerate(files):
-                archive.write(item, arcname=f"{index + 1:02d}{item.suffix}")
+        if motion_file is not None:
+            pack = work / "live"
+            try:
+                from app.core import livephoto
+
+                livephoto.build_live_pack(files[0], motion_file, pack, info.video_id or "Live")
+                entries = sorted(path for path in pack.rglob("*") if path.is_file())
+                with zipfile.ZipFile(target, "w", compression=zipfile.ZIP_STORED) as archive:
+                    for entry in entries:
+                        archive.write(entry, arcname=str(entry.relative_to(pack)))
+            except Exception:  # noqa: BLE001 - keep the raw components rather than fail
+                with zipfile.ZipFile(target, "w", compression=zipfile.ZIP_STORED) as archive:
+                    for item in files:
+                        archive.write(item, arcname=item.name)
+                    archive.write(motion_file, arcname="motion.mp4")
+                    archive.writestr("说明.txt", "实况转换所需的 ffmpeg / piexif 不可用，已保留原始图片和动态视频。\n")
+        else:
+            with zipfile.ZipFile(target, "w", compression=zipfile.ZIP_STORED) as archive:
+                for index, item in enumerate(files):
+                    archive.write(item, arcname=f"{index + 1:02d}{item.suffix}")
         if progress:
             progress({"status": "finished", "downloaded_bytes": target.stat().st_size,
                       "total_bytes": target.stat().st_size, "filename": str(target)})
