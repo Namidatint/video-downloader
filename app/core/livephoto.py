@@ -149,7 +149,7 @@ def _write_apple_still(source: Path, target: Path, identifier: str) -> Path:
 def _write_apple_movie(source: Path, target: Path, identifier: str) -> Path:
     target.parent.mkdir(parents=True, exist_ok=True)
     _run([_ffmpeg(), "-y", "-hide_banner", "-loglevel", "error",
-          "-i", str(source), "-c", "copy", "-f", "mov",
+          "-i", str(source), "-t", "2.9", "-c", "copy", "-f", "mov",
           "-movflags", "use_metadata_tags",
           "-metadata", f"com.apple.quicktime.content.identifier={identifier}",
           "-metadata", "com.apple.quicktime.still-image-time=0",
